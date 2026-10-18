@@ -1,0 +1,14 @@
+# 本地守护进程/启动器私有产物，不入库
+dashboard.html
+guard.flock
+guard.status.json
+supervisor.log
+collector.log
+*.tmp
+
+# 物料模板目录本身（内容由 deploy.sh 拷入仓库根后跟踪）
+github_actions/
+
+# Python 缓存
+__pycache__/
+*.pyc
