@@ -146,6 +146,9 @@ def render():
 </div></body></html>""")
 
     OUT.write_text("".join(parts), encoding="utf-8")
+    # 同时输出 index.html 供 GitHub Pages 作为站点首页（默认文档名）
+    idx = C.DIR / "index.html"
+    idx.write_text("".join(parts), encoding="utf-8")
     return OUT
 
 
