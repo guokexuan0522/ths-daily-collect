@@ -12,3 +12,4 @@ github_actions/
 # Python 缓存
 __pycache__/
 *.pyc
+.github/
