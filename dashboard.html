@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="refresh" content="300">
+<title>同花顺口径资金流看板</title>
+<style>
+  :root { --red:#d93026; --green:#0e9f6e; --ink:#1f2933; --sub:#6b7280;
+          --line:#e5e7eb; --bg:#f7f8fa; --card:#ffffff; }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:24px; background:var(--bg); color:var(--ink);
+         font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; }
+  .wrap { max-width:1080px; margin:0 auto; }
+  h1 { font-size:22px; margin:0 0 4px; }
+  .meta { color:var(--sub); font-size:13px; margin-bottom:20px; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+           gap:12px; margin-bottom:24px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px;
+          padding:14px 16px; }
+  .card .nm { font-size:14px; font-weight:600; }
+  .card .cd { font-size:12px; color:var(--sub); }
+  .card .v { font-size:24px; font-weight:700; margin-top:6px; }
+  .card .d { font-size:12px; color:var(--sub); margin-top:2px; }
+  .up { color:var(--red); } .down { color:var(--green); } .flat { color:var(--sub); }
+  section { background:var(--card); border:1px solid var(--line);
+            border-radius:12px; padding:16px 18px; margin-bottom:16px; }
+  h2 { font-size:16px; margin:0 0 10px; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th, td { padding:7px 8px; text-align:right; border-bottom:1px solid var(--line);
+           white-space:nowrap; }
+  th { color:var(--sub); font-weight:500; font-size:12px; }
+  td:first-child, th:first-child { text-align:left; }
+  tr:last-child td { border-bottom:none; }
+  .tot td { font-weight:700; background:#fafafa; }
+  .note { color:var(--sub); font-size:12px; margin-top:10px; line-height:1.7; }
+  .scroll { overflow-x:auto; }
+</style>
+</head>
+<body><div class="wrap">
+<h1>同花顺口径 · 资金流看板</h1>
+<div class="meta">生成时间：2026-10-19 19:45:27 ｜ 数据范围：2026-10-16 ~ 2026-10-19 ｜ 本页每5分钟自动刷新 ｜ 主力净流入 = 超大单净 + 大单净（同花顺个股页口径）</div>
+<div class="cards"><div class="card"><div class="nm">通鼎互联</div><div class="cd">002491 · 截至 2026-10-19</div><div class="v up">9726.20万</div><div class="d">近5日主力净额合计</div></div><div class="card"><div class="nm">春光集团</div><div class="cd">301531 · 截至 2026-10-19</div><div class="v up">239.06万</div><div class="d">近5日主力净额合计</div></div><div class="card"><div class="nm">ST中路</div><div class="cd">600818 · 截至 2026-10-19</div><div class="v down">-407.13万</div><div class="d">近5日主力净额合计</div></div><div class="card"><div class="nm">景旺电子</div><div class="cd">603228 · 截至 2026-10-19</div><div class="v down">-7987.19万</div><div class="d">近5日主力净额合计</div></div></div><section><h2>通鼎互联（002491）逐日资金流</h2><div class="scroll"><table><tr><th>交易日</th><th>收盘</th><th>成交量(万手)</th><th>成交额(亿)</th><th>超大单净(万)</th><th>大单净(万)</th><th>中单净(万)</th><th>小单净(万)</th><th>主力净额(万)</th></tr><tr><td>2026-10-16</td><td>17.28</td><td>106.13</td><td>18.59</td><td class="up">6244.86</td><td class="up">3520.14</td><td class="up">4223.25</td><td class="down">-13988.25</td><td class="up"><b>9765.00</b></td></tr><tr><td>2026-10-19</td><td>17.65</td><td>118.90</td><td>20.59</td><td class="down">-2855.66</td><td class="up">2816.86</td><td class="up">5101.32</td><td class="down">-5062.52</td><td class="down"><b>-38.80</b></td></tr><tr class="tot"><td>合计</td><td>-</td><td>225.04</td><td>39.18</td><td colspan="4"></td><td class="up">9726.20</td></tr></table></div><div class="note">采集时间戳：2026-10-19 15:21:55 ｜ 交易日来源：kline</div></section><section><h2>春光集团（301531）逐日资金流</h2><div class="scroll"><table><tr><th>交易日</th><th>收盘</th><th>成交量(万手)</th><th>成交额(亿)</th><th>超大单净(万)</th><th>大单净(万)</th><th>中单净(万)</th><th>小单净(万)</th><th>主力净额(万)</th></tr><tr><td>2026-10-16</td><td>39.20</td><td>1.80</td><td>0.71</td><td class="up">45.64</td><td class="up">501.81</td><td class="down">-74.88</td><td class="down">-472.56</td><td class="up"><b>547.44</b></td></tr><tr><td>2026-10-19</td><td>39.73</td><td>1.86</td><td>0.73</td><td class="down">-110.50</td><td class="down">-197.88</td><td class="up">140.21</td><td class="up">168.17</td><td class="down"><b>-308.38</b></td></tr><tr class="tot"><td>合计</td><td>-</td><td>3.66</td><td>1.44</td><td colspan="4"></td><td class="up">239.06</td></tr></table></div><div class="note">采集时间戳：2026-10-19 15:21:56 ｜ 交易日来源：kline</div></section><section><h2>ST中路（600818）逐日资金流</h2><div class="scroll"><table><tr><th>交易日</th><th>收盘</th><th>成交量(万手)</th><th>成交额(亿)</th><th>超大单净(万)</th><th>大单净(万)</th><th>中单净(万)</th><th>小单净(万)</th><th>主力净额(万)</th></tr><tr><td>2026-10-16</td><td>8.09</td><td>2.03</td><td>0.16</td><td class="up">11.42</td><td class="up">15.64</td><td class="down">-54.16</td><td class="up">27.10</td><td class="up"><b>27.06</b></td></tr><tr><td>2026-10-19</td><td>8.13</td><td>4.83</td><td>0.38</td><td class="down">-273.06</td><td class="down">-161.13</td><td class="up">99.87</td><td class="up">334.33</td><td class="down"><b>-434.19</b></td></tr><tr class="tot"><td>合计</td><td>-</td><td>6.87</td><td>0.54</td><td colspan="4"></td><td class="down">-407.13</td></tr></table></div><div class="note">采集时间戳：2026-10-19 15:21:58 ｜ 交易日来源：kline</div></section><section><h2>景旺电子（603228）逐日资金流</h2><div class="scroll"><table><tr><th>交易日</th><th>收盘</th><th>成交量(万手)</th><th>成交额(亿)</th><th>超大单净(万)</th><th>大单净(万)</th><th>中单净(万)</th><th>小单净(万)</th><th>主力净额(万)</th></tr><tr><td>2026-10-16</td><td>90.50</td><td>28.26</td><td>25.81</td><td class="down">-8966.52</td><td class="up">4324.43</td><td class="down">-6780.59</td><td class="up">11422.68</td><td class="down"><b>-4642.10</b></td></tr><tr><td>2026-10-19</td><td>86.90</td><td>30.12</td><td>25.98</td><td class="up">3065.85</td><td class="down">-6410.94</td><td class="down">-11677.41</td><td class="up">15022.50</td><td class="down"><b>-3345.09</b></td></tr><tr class="tot"><td>合计</td><td>-</td><td>58.38</td><td>51.79</td><td colspan="4"></td><td class="down">-7987.19</td></tr></table></div><div class="note">采集时间戳：2026-10-19 15:22:00 ｜ 交易日来源：kline</div></section>
+<section><h2>说明</h2><div class="note">
+1. 数据采自同花顺官方接口（个股页资金快照 + 日K线），非估算值；主力净流入 = 超大单净额 + 大单净额。<br>
+2. 颜色遵循国内惯例：<span class="up">红色 = 净流入</span>，<span class="green down">绿色 = 净流出</span>。<br>
+3. 账本文件：/workspace/ths_daily/flows.jsonl（每股票每交易日一行，同日多行以最后一行为准）。<br>
+4. 采集由云端定时任务自动完成（每个交易日 北京 08:30 / 15:45 / 18:00 三次），无需打开 WorkBuddy；本页托管于 GitHub Pages，每5分钟自动刷新，始终展示最新数据。
+</div></section>
+</div></body></html>

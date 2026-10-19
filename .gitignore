@@ -1,5 +1,4 @@
 # 本地守护进程/启动器私有产物，不入库
-dashboard.html
 guard.flock
 guard.status.json
 supervisor.log
@@ -12,4 +11,3 @@ github_actions/
 # Python 缓存
 __pycache__/
 *.pyc
-.github/

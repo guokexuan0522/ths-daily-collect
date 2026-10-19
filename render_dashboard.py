@@ -43,6 +43,7 @@ def render():
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="refresh" content="300">
 <title>同花顺口径资金流看板</title>
 <style>
   :root { --red:#d93026; --green:#0e9f6e; --ink:#1f2933; --sub:#6b7280;
@@ -78,7 +79,7 @@ def render():
 </head>
 <body><div class="wrap">
 <h1>同花顺口径 · 资金流看板</h1>
-<div class="meta">生成时间：__GEN__ ｜ 数据范围：__RNG__ ｜ 主力净流入 = 超大单净 + 大单净（同花顺个股页口径）</div>
+<div class="meta">生成时间：__GEN__ ｜ 数据范围：__RNG__ ｜ 本页每5分钟自动刷新 ｜ 主力净流入 = 超大单净 + 大单净（同花顺个股页口径）</div>
 """.replace("__GEN__", gen_at).replace("__RNG__", rng))
 
     # 总览卡片：最近5个交易日主力净额合计
@@ -140,7 +141,7 @@ def render():
 1. 数据采自同花顺官方接口（个股页资金快照 + 日K线），非估算值；主力净流入 = 超大单净额 + 大单净额。<br>
 2. 颜色遵循国内惯例：<span class="up">红色 = 净流入</span>，<span class="green down">绿色 = 净流出</span>。<br>
 3. 账本文件：/workspace/ths_daily/flows.jsonl（每股票每交易日一行，同日多行以最后一行为准）。<br>
-4. 采集由常驻守护进程自动完成（会话启动自动拉起，VM 重启后自愈）；盘中(9:15-15:15)不采集，避免记入未结算数据。
+4. 采集由云端定时任务自动完成（每个交易日 北京 08:30 / 15:45 / 18:00 三次），无需打开 WorkBuddy；本页托管于 GitHub Pages，每5分钟自动刷新，始终展示最新数据。
 </div></section>
 </div></body></html>""")
 

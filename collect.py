@@ -49,9 +49,15 @@ def main():
     if not (C.DIR / ".git").exists():
         return 0
 
+    # 云端运行时使用内置 GITHUB_TOKEN 推送；本地运行时沿用已配置的远端
+    tok = os.environ.get("GITHUB_TOKEN")
+    if tok:
+        sh(["git", "remote", "set-url", "origin",
+            "https://x-access-token:%s@github.com/guokexuan0522/ths-daily-collect.git" % tok])
+
     sh(["git", "config", "user.name", "ths-bot"])
     sh(["git", "config", "user.email", "ths-bot@users.noreply.github.com"])
-    sh(["git", "add", "flows.jsonl", "runs.log"])
+    sh(["git", "add", "flows.jsonl", "runs.log", "dashboard.html"])
     d = sh(["git", "diff", "--cached", "--quiet"])
     if d.returncode != 0:
         c = sh(["git", "commit", "-m", "collect %s" % r.get("trade_date")])
