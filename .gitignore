@@ -11,3 +11,9 @@ github_actions/
 # Python 缓存
 __pycache__/
 *.pyc
+
+# M3 回测地基（体积大，本地/云端各自拉取）
+history.npz
+history_raw.jsonl
+history_names.json
+backtest.json
