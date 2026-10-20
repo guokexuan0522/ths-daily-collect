@@ -4,210 +4,400 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="refresh" content="60">
-<title>持仓作战平台 · 实时盯盘 + 每日选股</title>
+<title>持仓作战平台 · 实时盯盘 + 每日选股 + 模型回测</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:#f5f6f8;color:#2d3436;padding:14px}
-.hd{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;margin-bottom:6px}
-h1{font-size:20px}.hd .meta{font-size:12px;color:#636e72}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:#eef0f4;color:#2d3436;padding:12px;max-width:1100px;margin:0 auto}
+a{color:#74b9ff;text-decoration:none}
+/* ===== 深色作战总览带 ===== */
+.top{background:linear-gradient(135deg,#17203a 0%,#1f2b4d 60%,#26355e 100%);color:#fff;border-radius:14px;padding:16px 18px;margin-bottom:14px;box-shadow:0 3px 10px rgba(23,32,58,.25)}
+.top .hdrow{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.top h1{font-size:21px;color:#fff;letter-spacing:.5px}
+.top .meta{font-size:12px;color:#a4b0be}
 .badge{display:inline-block;background:#0984e3;color:#fff;font-size:12px;font-weight:700;padding:3px 10px;border-radius:12px;margin-left:8px;vertical-align:middle}
-a{color:#0984e3;text-decoration:none}
-.ov{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:12px 0}
-.ov .box{background:#fff;border-radius:10px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
-.ov label{font-size:12px;color:#636e72;display:block;margin-bottom:4px}
-.ov b{font-size:20px}
+.lamp{display:inline-block;background:rgba(255,255,255,.12);font-size:12px;padding:3px 10px;border-radius:12px;margin-left:8px}
+.ov{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.ov .box{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10);border-radius:10px;padding:10px 12px}
+.ov label{font-size:12px;color:#a4b0be;display:block;margin-bottom:4px}
+.ov b{font-size:22px;font-weight:800;color:#fff}
+.ov .sub{font-size:11px;color:#8fa0b5;margin-top:2px}
+/* ===== 分区 ===== */
 .sec{background:#fff;border-radius:12px;padding:14px;margin:14px 0;box-shadow:0 1px 4px rgba(0,0,0,.07)}
-.sec h2{font-size:17px;margin-bottom:10px}.sec h2 small{font-size:12px;color:#636e72;font-weight:400}
-.card{background:#fff;border-radius:12px;padding:14px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.sec h2{font-size:17px;margin-bottom:4px}
+.sec h2 small{font-size:12px;color:#636e72;font-weight:400}
+/* ===== 持仓卡片 ===== */
+.card{background:#fff;border-radius:12px;padding:14px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.07);border:1px solid #e6e9ee}
 .card.alert{border:2px solid #e17055}
-.chead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:10px}
-.nm{font-size:17px;font-weight:700}
-.px{font-size:30px;font-weight:800}
-.chg{font-size:16px;font-weight:700}
-.cls{background:#dfe6e9;color:#636e72;font-size:11px;padding:2px 8px;border-radius:10px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin-bottom:10px}
-.grid label{font-size:12px;color:#636e72;display:block}
-.grid b{font-size:14px;font-weight:600}
-.range{position:relative;height:22px;background:#dfe6e9;border-radius:11px;margin:8px 0;overflow:hidden}
-.rangefill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#00b89433,#d6303133)}
-.rangelabel{position:absolute;width:100%;text-align:center;font-size:12px;line-height:22px}
-.fund{font-size:13px;margin:6px 0;color:#636e72}
-.mod{font-size:13.5px;background:#f1f2f6;border-left:4px solid #0984e3;padding:8px 10px;border-radius:0 8px 8px 0;margin:6px 0;line-height:1.65}
-.mod.disc{border-left-color:#e17055;background:#fdf2ec}
-.alerts{margin-top:6px}
-.tag{display:inline-block;background:#ffeaa7;color:#d63031;font-size:12px;padding:2px 8px;border-radius:10px;margin:2px 4px 2px 0}
-.tag.ok{background:#dfe6e9;color:#636e72}
-.pmeta{font-size:12px;color:#636e72;margin-bottom:8px}
+.chead{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+.nmbox{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.nm{font-size:18px;font-weight:800}
+.code{font-size:12px;color:#636e72}
+.tb{background:#dfe6e9;color:#636e72;font-size:11px;padding:2px 8px;border-radius:10px}
+.cls{background:#0984e3;color:#fff;font-size:11px;padding:2px 8px;border-radius:10px}
+.pxbox{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.px{font-size:32px;font-weight:800;line-height:1}
+.chg{font-size:17px;font-weight:700}
+.daypl{font-size:12px;font-weight:600}
+.alerts{margin:4px 0 8px}
+.tag{display:inline-block;background:#ffeaa7;color:#b33939;font-size:12px;padding:2px 8px;border-radius:10px;margin:2px 6px 2px 0;font-weight:600}
+.tag.ok{background:#dfe6e9;color:#636e72;font-weight:400}
+/* 指标网格 */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:6px;margin-bottom:10px}
+.kpi{background:#f7f8fa;border-radius:8px;padding:7px 10px}
+.kpi label{font-size:11px;color:#636e72;display:block;margin-bottom:2px}
+.kpi b{font-size:14px;font-weight:700}
+.hl{color:#0984e3}
+/* 关键价位色块条 */
+.levels{display:flex;flex-wrap:wrap;gap:6px;align-items:center;background:#f7f8fa;border-radius:10px;padding:8px 10px;margin-bottom:8px}
+.lvtitle{font-size:12px;color:#636e72;font-weight:700;margin-right:2px}
+.lv{display:inline-flex;align-items:baseline;gap:4px;font-size:12px;background:#fff;border:1.5px solid #dfe6e9;border-radius:8px;padding:3px 8px;line-height:1.5}
+.lv em{font-style:normal}
+.lv b{font-size:14px;font-weight:800}
+.lv i{font-style:normal;font-size:11px;color:#636e72}
+.lv-stop{border-color:#00a37a;background:#e8f8f3}
+.lv-stop b{color:#00a37a}
+.lv-tgt{border-color:#e0322f;background:#fdeceb}
+.lv-tgt b{color:#e0322f}
+.lv-cost{border-color:#b2bec3}
+.lv-cost b{color:#636e72}
+.lv-now{border-color:#2d3436;background:#2d3436}
+.lv-now b{color:#fff}
+.lv-now i{color:#dfe6e9}
+.lv-ma{border-color:#6c5ce7;background:#f0edfd}
+.lv-ma b{color:#6c5ce7}
+.lv-res{border-color:#e0322f;background:#fff5f4}
+.lv-res b{color:#e0322f}
+.lv-sup{border-color:#00a37a;background:#f4fbf8}
+.lv-sup b{color:#00a37a}
+/* 日内位置条 */
+.range{position:relative;height:22px;background:#dfe6e9;border-radius:11px;margin:6px 0 8px;overflow:hidden}
+.rangefill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#00a37a33,#e0322f33)}
+.rangelabel{position:absolute;width:100%;text-align:center;font-size:12px;line-height:22px;color:#2d3436}
+.fundline{font-size:13px;margin:4px 0 8px;color:#2d3436;background:#f7f8fa;border-radius:8px;padding:6px 10px}
+/* 四模块 */
+.mods{display:grid;gap:6px}
+.mod{font-size:13.5px;border-left:4px solid #0984e3;background:#f4f8fd;padding:8px 12px;border-radius:0 8px 8px 0;line-height:1.65}
+.mod b{display:block;font-size:13px;margin-bottom:2px}
+.mod p{font-size:13.5px}
+.mt{border-left-color:#0984e3}
+.mw{border-left-color:#6c5ce7;background:#f6f4fe}
+.mo-bad{border-left-color:#e0322f;background:#fdeceb}
+.mo-bad b{color:#c0392b}
+.mo-warn{border-left-color:#e17055;background:#fdf2ec}
+.mo-warn b{color:#d35400}
+.mo-good{border-left-color:#0984e3;background:#eaf3fd}
+.mo-good b{color:#0984e3}
+.mo-watch{border-left-color:#636e72;background:#f4f5f6}
+.md{border-left-color:#e17055;background:#fdf6f1}
+/* ===== 选股区 ===== */
+.pmeta{font-size:12px;color:#636e72;margin-bottom:10px;line-height:1.7}
 .pick{border:1px solid #dfe6e9;border-radius:10px;padding:10px 12px;margin-bottom:10px}
-.phead{display:flex;gap:14px;align-items:baseline;flex-wrap:wrap;margin-bottom:6px}
-.pnm{font-size:15px;font-weight:700}
-.pscore{color:#0984e3;font-weight:700;font-size:13px}
-.pprice{font-size:12px;color:#636e72}
-.why{margin:4px 0 6px 18px;font-size:13px;line-height:1.7}
-.prow{font-size:13px;line-height:1.6;margin:2px 0}
-.ft{background:#fff;border-radius:12px;padding:14px;margin:14px 0;font-size:12px;color:#636e72;line-height:1.8;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.pick.primary{border:2px solid #0984e3;background:#fbfdff}
+.phead{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;margin-bottom:6px}
+.rank{background:#2d3436;color:#fff;font-size:13px;font-weight:800;border-radius:8px;padding:2px 8px}
+.pick.primary .rank{background:#0984e3}
+.pnm{font-size:16px;font-weight:800}
+.pnm small{font-size:12px;color:#636e72;font-weight:400}
+.ptag{font-size:11px;font-weight:700;color:#0984e3;border:1px solid #0984e3;border-radius:10px;padding:1px 8px}
+.pprice{font-size:12px;color:#636e72;font-weight:600}
+.scorebar{position:relative;height:16px;background:#eef0f4;border-radius:8px;margin:4px 0 6px;overflow:hidden}
+.scorefill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#74b9ff,#0984e3)}
+.scorelabel{position:absolute;width:100%;text-align:center;font-size:11px;line-height:16px;color:#2d3436}
+.scorelabel b{color:#0984e3}
+.fchs{margin:2px 0 6px}
+.fc{display:inline-block;font-size:11px;background:#f1f2f6;border:1px solid #dfe6e9;border-radius:10px;padding:1px 8px;margin:2px 4px 2px 0;color:#2d3436;font-weight:600}
+.why{margin:4px 0 8px 18px;font-size:13px;line-height:1.75}
+.why li::marker{color:#0984e3}
+.prow{font-size:13px;line-height:1.65;margin:3px 0;padding:5px 10px;border-radius:0 8px 8px 0}
+.prow b{display:block;font-size:12px;margin-bottom:1px}
+.pb{background:#f4f8fd;border-left:3px solid #0984e3}
+.ps{background:#e8f8f3;border-left:3px solid #00a37a}
+.pt{background:#fdeceb;border-left:3px solid #e0322f}
+.pi{background:#fdf2ec;border-left:3px solid #e17055}
+/* ===== 回测战绩区 ===== */
+.btgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:10px}
+.btbox{background:#f7f8fa;border-radius:10px;padding:10px;text-align:center}
+.btbox label{font-size:11px;color:#636e72;display:block;margin-bottom:4px}
+.btbox b{font-size:19px;font-weight:800}
+.btnote{font-size:12px;color:#636e72;background:#f7f8fa;border-radius:8px;padding:8px 12px;line-height:1.7;margin-bottom:10px}
+.btt{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
+.btt th{background:#f1f2f6;padding:5px 6px;text-align:left;font-size:11px;color:#636e72;white-space:nowrap}
+.btt td{padding:5px 6px;border-bottom:1px solid #eef0f4;white-space:nowrap}
+.btt tr:hover{background:#f7f8fa}
+/* ===== 页脚 ===== */
+.ft{background:#fff;border-radius:12px;padding:14px;margin:14px 0;font-size:12px;color:#636e72;line-height:1.9;box-shadow:0 1px 3px rgba(0,0,0,.06)}
 .ft h3{font-size:13px;color:#2d3436;margin-bottom:6px}
 .ft ol{margin-left:18px}
+.ft .rules2{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:2px 14px}
+@media (max-width:600px){
+  body{padding:8px}
+  .px{font-size:26px}
+  .ov b{font-size:18px}
+  .top h1{font-size:18px}
+}
 </style>
 </head>
 <body>
-<div class="hd">
-  <h1>持仓作战平台<span class="badge">v2.0</span> <a href="flows.html">→ 资金流看板</a></h1>
-  <div class="meta">生成 2026-10-20 17:43:31 ｜ 每60秒自动刷新 ｜ 红=涨/盈利 绿=跌/亏损</div>
-</div>
-<div class="ov">
-  <div class="box"><label>总市值</label><b>396.26 万</b></div>
-  <div class="box"><label>持仓总盈亏</label><b style="color:#00b894">-252.44 万 (-38.91%%)</b></div>
-  <div class="box"><label>当日盈亏</label><b style="color:#d63031">+11.73 万</b></div>
-  <div class="box"><label>持仓数</label><b>4 只</b></div>
+<div class="top">
+  <div class="hdrow">
+    <h1>📈 持仓作战平台<span class="badge">v3.0</span>
+      <span class="lamp">🔴 已收盘·盘后复盘</span></h1>
+    <div class="meta">生成 2026-10-20 18:38:48 ｜ 每60秒自动刷新 ｜ <a href="flows.html">→ 资金流看板</a> ｜ 红=涨/盈利 · 绿=跌/亏损</div>
+  </div>
+  <div class="ov">
+    <div class="box"><label>总市值</label><b>396.26 万</b><div class="sub">总成本 648.69 万</div></div>
+    <div class="box"><label>持仓总盈亏</label><b style="color:#00a37a">-252.44 万</b><div class="sub">-38.91%</div></div>
+    <div class="box"><label>当日盈亏</label><b style="color:#e0322f">+11.73 万</b><div class="sub">按今日涨跌×持仓</div></div>
+    <div class="box"><label>持仓数</label><b>4 只</b><div class="sub">超短1-3只纪律内</div></div>
+    <div class="box"><label>今日主推</label><b>思特威(79.7) / 达实智能(73.7) / 锦龙股份(71.6)</b><div class="sub">候选池详见选股区</div></div>
+  </div>
 </div>
 
+<div class="sec">
+  <h2>📊 持仓作战区 <small>盘中实时意见（买/加/做T）＋ 盘后作战指令（明日走留判断），技术与数据点已标注</small></h2>
+  
 <div class="card alert">
   <div class="chead">
-    <span class="nm">ST中路 <small>600818</small></span>
-    <span class="px" style="color:#d63031">8.40</span>
-    <span class="chg" style="color:#d63031">+3.32%</span>
-    <span class="cls">已收盘</span>
+    <div class="nmbox">
+      <span class="nm">ST中路</span><span class="code">600818</span>
+      <span class="tb">ST ±5%</span>
+      <span class="cls">已收盘</span>
+    </div>
+    <div class="pxbox">
+      <span class="px" style="color:#e0322f">8.40</span>
+      <span class="chg" style="color:#e0322f">+3.32%</span>
+      <span class="daypl" style="color:#e0322f">日内+2.11万</span>
+    </div>
   </div>
-  <div class="grid">
-    <div><label>持仓数量</label><b>78,200 股</b></div>
-    <div><label>成本价 / 市值</label><b>9.352 ｜ 65.69万</b></div>
-    <div><label>持仓盈亏</label><b style="color:#00b894">-7.44万 (-10.18%)</b></div>
-    <div><label>当日盈亏</label><b style="color:#d63031">+2.11万</b></div>
-    <div><label>今日高/低</label><b>8.40 / 8.01（涨跌停±5%：8.54/7.72）</b></div>
-    <div><label>量比 / 换手</label><b>盘后不显示 ｜ 1.41%</b></div>
-  </div>
-  <div class="range"><div class="rangefill" style="width:100%"></div><div class="rangelabel">日内位置 100%（低8.01 → 高8.40，均价8.28）</div></div>
-  <div class="fund">2026-10-20 主力净额：<b style="color:#d63031">+205.76万</b> ｜ 当日成交额 2,786万</div>
   <div class="alerts"><span class="tag">⚠ 涨跌幅3.32%≥3%</span><span class="tag">⚠ 临近涨停(8.54)</span></div>
-  <div class="mod"><b>分时做T指导</b>已收盘：今日低8.01→高8.40，收于日内位置100%，均价8.28。明日以今日低点8.01为分时防守位，跌破不接；放量过今日高点8.40再考虑跟进。</div>
-  <div class="mod"><b>日线波段指导</b>支撑：EXPMA12 8.58 / 近10日低点8.04 / EXPMA50 8.01；压力：近10日高点9.32 / 60日高点9.32。123法则出现2项下跌确认：反弹不追，守EXPMA12（8.58），破位止损。</div>
-  <div class="mod disc"><b>超短交易纪律</b>① 持仓周期：买入起5个交易日内必须决断，最长15日（波段）；② 止损：买入价-5%（本票现价对应7.98），触发无条件执行；③ 止盈：+8%减半（现价对应9.07），剩余仓位看EXPMA12（8.58）去留；④ 禁止：不在候选池外的股票冲动买入，计划外操作必须登记原因。</div>
+  <div class="kpis">
+    <div class="kpi"><label>持仓数量</label><b>78,200 股</b></div>
+    <div class="kpi"><label>成本价</label><b>9.3516</b></div>
+    <div class="kpi"><label>市值 ｜ 仓位占比</label><b>65.69万 ｜ <span class="hl">16.6%</span></b></div>
+    <div class="kpi"><label>持仓盈亏</label><b style="color:#00a37a">-7.44万 (-10.18%)</b></div>
+    <div class="kpi"><label>当日盈亏</label><b style="color:#e0322f">+2.11 万</b></div>
+    <div class="kpi"><label>今日 高/低</label><b>8.40 / 8.01</b></div>
+    <div class="kpi"><label>涨跌停</label><b>8.54 / 7.72</b></div>
+    <div class="kpi"><label>量比 ｜ 换手</label><b>盘后不显示 ｜ 1.41%</b></div>
+    <div class="kpi"><label>成交额</label><b>2786 万</b></div>
+    <div class="kpi"><label>振幅 ｜ 20日平均振幅</label><b>4.8% ｜ 5.2%</b></div>
+  </div>
+  <div class="levels"><span class="lvtitle">关键价位</span><span class="lv lv-stop"><em>🛑</em>止损 <b>7.98</b><i>-5.0%</i><i>现价基准·成本止损已穿</i></span><span class="lv lv-cost"><em></em>成本 <b>9.35</b></span><span class="lv lv-now"><em></em>现价 <b>8.40</b></span><span class="lv lv-ma"><em></em>EXPMA12 <b>8.58</b><i>-2.1%</i></span><span class="lv lv-ma"><em></em>EXPMA50 <b>8.01</b><i>+4.8%</i></span><span class="lv lv-res"><em></em>压力 <b>9.90</b></span><span class="lv lv-sup"><em></em>支撑 <b>7.61</b></span><span class="lv lv-tgt"><em>🎯</em>目标 <b>10.10</b><i>+20.2%</i></span></div>
+  <div class="range"><div class="rangefill" style="width:100%"></div>
+    <div class="rangelabel">日内位置 100%（低8.01 → 高8.40，均价8.28）</div></div>
+  <div class="fundline">📊 主力净额（同花顺口径·超大单+大单，2026-10-20）：<b style="color:#e0322f">+205.76万</b></div>
+  <div class="mods">
+    <div class="mod mt"><b>⏱ 分时做T指导 · 盘中</b><p>已收盘：今日低8.01→高8.40，收于日内位置100%，均价8.28。明日以今日低点8.01为分时防守位，跌破不接；放量过今日高点8.40再考虑跟进。</p></div>
+    <div class="mod mw"><b>📈 日线波段指导 · 盘中</b><p>支撑：EXPMA12 8.58 / 近10日低点7.61 / EXPMA50 8.01；压力：近10日高点9.90 / 60日高点9.90。趋势中性：EXPMA12（8.58）附近震荡对待，突破跟进、破位退。</p></div>
+    <div class="mod mo-warn"><b>🧭 盘后作战指令 · 明日/未来几日走留判断</b><p>【减仓】浮亏-10.2%深套，成本止损线8.88早已跌穿：明日反弹至EXPMA12（8.58）附近坚决减仓降低敞口；若经你决策继续持有，以现价为基准重设止损7.98（-5%），跌破无条件清仓，不许再扛。</p></div>
+    <div class="mod md"><b>🛡 超短交易纪律</b><p>① 持仓周期：买入起5个交易日内必须决断，最长15日（波段）；② 止损：买入价-5%（本票现价对应7.98），触发无条件执行；③ 止盈：+8%减半（现价对应9.07），剩余仓位看EXPMA12（8.58）去留；④ 禁止：不在候选池外的股票冲动买入，计划外操作必须登记原因。</p></div>
+  </div>
 </div>
 <div class="card">
   <div class="chead">
-    <span class="nm">景旺电子 <small>603228</small></span>
-    <span class="px" style="color:#d63031">88.38</span>
-    <span class="chg" style="color:#d63031">+1.70%</span>
-    <span class="cls">已收盘</span>
+    <div class="nmbox">
+      <span class="nm">景旺电子</span><span class="code">603228</span>
+      <span class="tb">主板 ±10%</span>
+      <span class="cls">已收盘</span>
+    </div>
+    <div class="pxbox">
+      <span class="px" style="color:#e0322f">88.38</span>
+      <span class="chg" style="color:#e0322f">+1.70%</span>
+      <span class="daypl" style="color:#e0322f">日内+0.12万</span>
+    </div>
   </div>
-  <div class="grid">
-    <div><label>持仓数量</label><b>800 股</b></div>
-    <div><label>成本价 / 市值</label><b>98.376 ｜ 7.07万</b></div>
-    <div><label>持仓盈亏</label><b style="color:#00b894">-0.80万 (-10.16%)</b></div>
-    <div><label>当日盈亏</label><b style="color:#d63031">+0.12万</b></div>
-    <div><label>今日高/低</label><b>90.05 / 85.00（涨跌停±10%：95.59/78.21）</b></div>
-    <div><label>量比 / 换手</label><b>盘后不显示 ｜ 2.21%</b></div>
+  <div class="alerts"><span class="tag ok">✓ 无异动</span></div>
+  <div class="kpis">
+    <div class="kpi"><label>持仓数量</label><b>800 股</b></div>
+    <div class="kpi"><label>成本价</label><b>98.3760</b></div>
+    <div class="kpi"><label>市值 ｜ 仓位占比</label><b>7.07万 ｜ <span class="hl">1.8%</span></b></div>
+    <div class="kpi"><label>持仓盈亏</label><b style="color:#00a37a">-0.80万 (-10.16%)</b></div>
+    <div class="kpi"><label>当日盈亏</label><b style="color:#e0322f">+0.12 万</b></div>
+    <div class="kpi"><label>今日 高/低</label><b>90.05 / 85.00</b></div>
+    <div class="kpi"><label>涨跌停</label><b>95.59 / 78.21</b></div>
+    <div class="kpi"><label>量比 ｜ 换手</label><b>盘后不显示 ｜ 2.21%</b></div>
+    <div class="kpi"><label>成交额</label><b>191389 万</b></div>
+    <div class="kpi"><label>振幅 ｜ 20日平均振幅</label><b>5.8% ｜ 7.2%</b></div>
   </div>
-  <div class="range"><div class="rangefill" style="width:67%"></div><div class="rangelabel">日内位置 67%（低85.00 → 高90.05，均价88.23）</div></div>
-  <div class="fund">2026-10-20 主力净额：<b style="color:#00b894">-2,438.82万</b> ｜ 当日成交额 191,389万</div>
-  <div class="alerts"><span class="tag ok">无异动</span></div>
-  <div class="mod"><b>分时做T指导</b>已收盘：今日低85.00→高90.05，收于日内位置67%，均价88.23。明日以今日低点85.00为分时防守位，跌破不接；放量过今日高点90.05再考虑跟进。</div>
-  <div class="mod"><b>日线波段指导</b>支撑：EXPMA12 94.17 / 近10日低点86.90 / EXPMA50 94.44；压力：近10日高点100.91 / 60日高点108.00。价格在EXPMA50下方，波段弱势，反弹至EXPMA12附近（94.17）先减后看。</div>
-  <div class="mod disc"><b>超短交易纪律</b>① 持仓周期：买入起5个交易日内必须决断，最长15日（波段）；② 止损：买入价-5%（本票现价对应83.96），触发无条件执行；③ 止盈：+8%减半（现价对应95.45），剩余仓位看EXPMA12（94.17）去留；④ 禁止：不在候选池外的股票冲动买入，计划外操作必须登记原因。</div>
+  <div class="levels"><span class="lvtitle">关键价位</span><span class="lv lv-stop"><em>🛑</em>止损 <b>83.96</b><i>-5.0%</i><i>现价基准·成本止损已穿</i></span><span class="lv lv-cost"><em></em>成本 <b>98.38</b></span><span class="lv lv-now"><em></em>现价 <b>88.38</b></span><span class="lv lv-ma"><em></em>EXPMA12 <b>94.17</b><i>-6.2%</i></span><span class="lv lv-ma"><em></em>EXPMA50 <b>94.44</b><i>-6.4%</i></span><span class="lv lv-res"><em></em>压力 <b>106.20</b></span><span class="lv lv-sup"><em></em>支撑 <b>83.13</b></span><span class="lv lv-tgt"><em>🎯</em>目标 <b>106.25</b><i>+20.2%</i></span></div>
+  <div class="range"><div class="rangefill" style="width:67%"></div>
+    <div class="rangelabel">日内位置 67%（低85.00 → 高90.05，均价88.23）</div></div>
+  <div class="fundline">📊 主力净额（同花顺口径·超大单+大单，2026-10-20）：<b style="color:#00a37a">-2,438.82万</b></div>
+  <div class="mods">
+    <div class="mod mt"><b>⏱ 分时做T指导 · 盘中</b><p>已收盘：今日低85.00→高90.05，收于日内位置67%，均价88.23。明日以今日低点85.00为分时防守位，跌破不接；放量过今日高点90.05再考虑跟进。</p></div>
+    <div class="mod mw"><b>📈 日线波段指导 · 盘中</b><p>支撑：EXPMA12 94.17 / 近10日低点83.13 / EXPMA50 94.44；压力：近10日高点106.20 / 60日高点113.60。价格在EXPMA50下方，波段弱势，反弹至EXPMA12附近（94.17）先减后看。</p></div>
+    <div class="mod mo-warn"><b>🧭 盘后作战指令 · 明日/未来几日走留判断</b><p>【减仓】浮亏-10.2%深套，成本止损线93.46早已跌穿：明日反弹至EXPMA12（94.17）附近坚决减仓降低敞口；若经你决策继续持有，以现价为基准重设止损83.96（-5%），跌破无条件清仓，不许再扛。</p></div>
+    <div class="mod md"><b>🛡 超短交易纪律</b><p>① 持仓周期：买入起5个交易日内必须决断，最长15日（波段）；② 止损：买入价-5%（本票现价对应83.96），触发无条件执行；③ 止盈：+8%减半（现价对应95.45），剩余仓位看EXPMA12（94.17）去留；④ 禁止：不在候选池外的股票冲动买入，计划外操作必须登记原因。</p></div>
+  </div>
 </div>
 <div class="card alert">
   <div class="chead">
-    <span class="nm">春光集团 <small>301531</small></span>
-    <span class="px" style="color:#d63031">41.25</span>
-    <span class="chg" style="color:#d63031">+3.83%</span>
-    <span class="cls">已收盘</span>
+    <div class="nmbox">
+      <span class="nm">春光集团</span><span class="code">301531</span>
+      <span class="tb">创业/科创 ±20%</span>
+      <span class="cls">已收盘</span>
+    </div>
+    <div class="pxbox">
+      <span class="px" style="color:#e0322f">41.25</span>
+      <span class="chg" style="color:#e0322f">+3.83%</span>
+      <span class="daypl" style="color:#e0322f">日内+8.36万</span>
+    </div>
   </div>
-  <div class="grid">
-    <div><label>持仓数量</label><b>55,000 股</b></div>
-    <div><label>成本价 / 市值</label><b>82.547 ｜ 226.88万</b></div>
-    <div><label>持仓盈亏</label><b style="color:#00b894">-227.13万 (-50.03%)</b></div>
-    <div><label>当日盈亏</label><b style="color:#d63031">+8.36万</b></div>
-    <div><label>今日高/低</label><b>42.29 / 39.00（涨跌停±20%：47.68/31.78）</b></div>
-    <div><label>量比 / 换手</label><b>盘后不显示 ｜ 5.32%</b></div>
-  </div>
-  <div class="range"><div class="rangefill" style="width:68%"></div><div class="rangelabel">日内位置 68%（低39.00 → 高42.29，均价41.15）</div></div>
-  <div class="fund">2026-10-20 主力净额：<b style="color:#d63031">+382.45万</b> ｜ 当日成交额 10,269万</div>
   <div class="alerts"><span class="tag">⚠ 涨跌幅3.83%≥3%</span></div>
-  <div class="mod"><b>分时做T指导</b>已收盘：今日低39.00→高42.29，收于日内位置68%，均价41.15。明日以今日低点39.00为分时防守位，跌破不接；放量过今日高点42.29再考虑跟进。</div>
-  <div class="mod"><b>日线波段指导</b>支撑：EXPMA12 43.54 / 近10日低点39.20 / EXPMA50 47.41；压力：近10日高点46.99 / 60日高点54.26。价格在EXPMA50下方，波段弱势，反弹至EXPMA12附近（43.54）先减后看。</div>
-  <div class="mod disc"><b>超短交易纪律</b>① 持仓周期：买入起5个交易日内必须决断，最长15日（波段）；② 止损：买入价-5%（本票现价对应39.19），触发无条件执行；③ 止盈：+8%减半（现价对应44.55），剩余仓位看EXPMA12（43.54）去留；④ 禁止：不在候选池外的股票冲动买入，计划外操作必须登记原因。</div>
+  <div class="kpis">
+    <div class="kpi"><label>持仓数量</label><b>55,000 股</b></div>
+    <div class="kpi"><label>成本价</label><b>82.5472</b></div>
+    <div class="kpi"><label>市值 ｜ 仓位占比</label><b>226.88万 ｜ <span class="hl">57.3%</span></b></div>
+    <div class="kpi"><label>持仓盈亏</label><b style="color:#00a37a">-227.13万 (-50.03%)</b></div>
+    <div class="kpi"><label>当日盈亏</label><b style="color:#e0322f">+8.36 万</b></div>
+    <div class="kpi"><label>今日 高/低</label><b>42.29 / 39.00</b></div>
+    <div class="kpi"><label>涨跌停</label><b>47.68 / 31.78</b></div>
+    <div class="kpi"><label>量比 ｜ 换手</label><b>盘后不显示 ｜ 5.32%</b></div>
+    <div class="kpi"><label>成交额</label><b>10269 万</b></div>
+    <div class="kpi"><label>振幅 ｜ 20日平均振幅</label><b>8.3% ｜ 5.6%</b></div>
+  </div>
+  <div class="levels"><span class="lvtitle">关键价位</span><span class="lv lv-stop"><em>🛑</em>止损 <b>39.19</b><i>-5.0%</i><i>现价基准·成本止损已穿</i></span><span class="lv lv-cost"><em></em>成本 <b>82.55</b></span><span class="lv lv-now"><em></em>现价 <b>41.25</b></span><span class="lv lv-ma"><em></em>EXPMA12 <b>43.54</b><i>-5.3%</i></span><span class="lv lv-ma"><em></em>EXPMA50 <b>47.41</b><i>-13.0%</i></span><span class="lv lv-res"><em></em>压力 <b>50.08</b></span><span class="lv lv-sup"><em></em>支撑 <b>37.91</b></span><span class="lv lv-tgt"><em>🎯</em>目标 <b>89.15</b><i>+116.1%</i></span></div>
+  <div class="range"><div class="rangefill" style="width:68%"></div>
+    <div class="rangelabel">日内位置 68%（低39.00 → 高42.29，均价41.15）</div></div>
+  <div class="fundline">📊 主力净额（同花顺口径·超大单+大单，2026-10-20）：<b style="color:#e0322f">+382.45万</b></div>
+  <div class="mods">
+    <div class="mod mt"><b>⏱ 分时做T指导 · 盘中</b><p>已收盘：今日低39.00→高42.29，收于日内位置68%，均价41.15。明日以今日低点39.00为分时防守位，跌破不接；放量过今日高点42.29再考虑跟进。</p></div>
+    <div class="mod mw"><b>📈 日线波段指导 · 盘中</b><p>支撑：EXPMA12 43.54 / 近10日低点37.91 / EXPMA50 47.41；压力：近10日高点50.08 / 60日高点56.55。价格在EXPMA50下方，波段弱势，反弹至EXPMA12附近（43.54）先减后看。</p></div>
+    <div class="mod mo-warn"><b>🧭 盘后作战指令 · 明日/未来几日走留判断</b><p>【减仓】浮亏-50.0%深套，成本止损线78.42早已跌穿：明日反弹至EXPMA12（43.54）附近坚决减仓降低敞口；若经你决策继续持有，以现价为基准重设止损39.19（-5%），跌破无条件清仓，不许再扛。</p></div>
+    <div class="mod md"><b>🛡 超短交易纪律</b><p>① 持仓周期：买入起5个交易日内必须决断，最长15日（波段）；② 止损：买入价-5%（本票现价对应39.19），触发无条件执行；③ 止盈：+8%减半（现价对应44.55），剩余仓位看EXPMA12（43.54）去留；④ 禁止：不在候选池外的股票冲动买入，计划外操作必须登记原因。</p></div>
+  </div>
 </div>
 <div class="card">
   <div class="chead">
-    <span class="nm">通鼎互联 <small>002491</small></span>
-    <span class="px" style="color:#d63031">17.86</span>
-    <span class="chg" style="color:#d63031">+1.19%</span>
-    <span class="cls">已收盘</span>
+    <div class="nmbox">
+      <span class="nm">通鼎互联</span><span class="code">002491</span>
+      <span class="tb">主板 ±10%</span>
+      <span class="cls">已收盘</span>
+    </div>
+    <div class="pxbox">
+      <span class="px" style="color:#e0322f">17.86</span>
+      <span class="chg" style="color:#e0322f">+1.19%</span>
+      <span class="daypl" style="color:#e0322f">日内+1.14万</span>
+    </div>
   </div>
-  <div class="grid">
-    <div><label>持仓数量</label><b>54,100 股</b></div>
-    <div><label>成本价 / 市值</label><b>21.014 ｜ 96.62万</b></div>
-    <div><label>持仓盈亏</label><b style="color:#00b894">-17.06万 (-15.01%)</b></div>
-    <div><label>当日盈亏</label><b style="color:#d63031">+1.14万</b></div>
-    <div><label>今日高/低</label><b>18.28 / 17.38（涨跌停±10%：19.41/15.88）</b></div>
-    <div><label>量比 / 换手</label><b>盘后不显示 ｜ 10.36%</b></div>
+  <div class="alerts"><span class="tag ok">✓ 无异动</span></div>
+  <div class="kpis">
+    <div class="kpi"><label>持仓数量</label><b>54,100 股</b></div>
+    <div class="kpi"><label>成本价</label><b>21.0137</b></div>
+    <div class="kpi"><label>市值 ｜ 仓位占比</label><b>96.62万 ｜ <span class="hl">24.4%</span></b></div>
+    <div class="kpi"><label>持仓盈亏</label><b style="color:#00a37a">-17.06万 (-15.01%)</b></div>
+    <div class="kpi"><label>当日盈亏</label><b style="color:#e0322f">+1.14 万</b></div>
+    <div class="kpi"><label>今日 高/低</label><b>18.28 / 17.38</b></div>
+    <div class="kpi"><label>涨跌停</label><b>19.41 / 15.88</b></div>
+    <div class="kpi"><label>量比 ｜ 换手</label><b>盘后不显示 ｜ 10.36%</b></div>
+    <div class="kpi"><label>成交额</label><b>218346 万</b></div>
+    <div class="kpi"><label>振幅 ｜ 20日平均振幅</label><b>5.1% ｜ 6.9%</b></div>
   </div>
-  <div class="range"><div class="rangefill" style="width:53%"></div><div class="rangelabel">日内位置 53%（低17.38 → 高18.28，均价17.91）</div></div>
-  <div class="fund">2026-10-20 主力净额：<b style="color:#d63031">+2,957.97万</b> ｜ 当日成交额 218,346万</div>
-  <div class="alerts"><span class="tag ok">无异动</span></div>
-  <div class="mod"><b>分时做T指导</b>已收盘：今日低17.38→高18.28，收于日内位置53%，均价17.91。明日以今日低点17.38为分时防守位，跌破不接；放量过今日高点18.28再考虑跟进。</div>
-  <div class="mod"><b>日线波段指导</b>支撑：EXPMA12 18.78 / 近10日低点17.04 / EXPMA50 19.77；压力：近10日高点19.86 / 60日高点23.90。价格在EXPMA50下方，波段弱势，反弹至EXPMA12附近（18.78）先减后看。</div>
-  <div class="mod disc"><b>超短交易纪律</b>① 持仓周期：买入起5个交易日内必须决断，最长15日（波段）；② 止损：买入价-5%（本票现价对应16.97），触发无条件执行；③ 止盈：+8%减半（现价对应19.29），剩余仓位看EXPMA12（18.78）去留；④ 禁止：不在候选池外的股票冲动买入，计划外操作必须登记原因。</div>
+  <div class="levels"><span class="lvtitle">关键价位</span><span class="lv lv-stop"><em>🛑</em>止损 <b>16.97</b><i>-5.0%</i><i>现价基准·成本止损已穿</i></span><span class="lv lv-cost"><em></em>成本 <b>21.01</b></span><span class="lv lv-now"><em></em>现价 <b>17.86</b></span><span class="lv lv-ma"><em></em>EXPMA12 <b>18.78</b><i>-4.9%</i></span><span class="lv lv-ma"><em></em>EXPMA50 <b>19.77</b><i>-9.7%</i></span><span class="lv lv-res"><em></em>压力 <b>21.19</b></span><span class="lv lv-sup"><em></em>支撑 <b>16.33</b></span><span class="lv lv-tgt"><em>🎯</em>目标 <b>22.69</b><i>+27.0%</i></span></div>
+  <div class="range"><div class="rangefill" style="width:53%"></div>
+    <div class="rangelabel">日内位置 53%（低17.38 → 高18.28，均价17.91）</div></div>
+  <div class="fundline">📊 主力净额（同花顺口径·超大单+大单，2026-10-20）：<b style="color:#e0322f">+2,957.97万</b></div>
+  <div class="mods">
+    <div class="mod mt"><b>⏱ 分时做T指导 · 盘中</b><p>已收盘：今日低17.38→高18.28，收于日内位置53%，均价17.91。明日以今日低点17.38为分时防守位，跌破不接；放量过今日高点18.28再考虑跟进。</p></div>
+    <div class="mod mw"><b>📈 日线波段指导 · 盘中</b><p>支撑：EXPMA12 18.78 / 近10日低点16.33 / EXPMA50 19.77；压力：近10日高点21.19 / 60日高点25.40。价格在EXPMA50下方，波段弱势，反弹至EXPMA12附近（18.78）先减后看。</p></div>
+    <div class="mod mo-warn"><b>🧭 盘后作战指令 · 明日/未来几日走留判断</b><p>【减仓】浮亏-15.0%深套，成本止损线19.96早已跌穿：明日反弹至EXPMA12（18.78）附近坚决减仓降低敞口；若经你决策继续持有，以现价为基准重设止损16.97（-5%），跌破无条件清仓，不许再扛。</p></div>
+    <div class="mod md"><b>🛡 超短交易纪律</b><p>① 持仓周期：买入起5个交易日内必须决断，最长15日（波段）；② 止损：买入价-5%（本票现价对应16.97），触发无条件执行；③ 止盈：+8%减半（现价对应19.29），剩余仓位看EXPMA12（18.78）去留；④ 禁止：不在候选池外的股票冲动买入，计划外操作必须登记原因。</p></div>
+  </div>
 </div>
-<div class="sec"><h2>每日选股 · 候选池 <small>（M2引擎 · 全A海扫 · 数据源：新浪全市场+日K+同花顺资金流）</small></h2><div class="pmeta">生成于 2026-10-20 17:20:18 ｜ 扫描 5574 只 → 入池 250 → 打分 206 ｜ 耗时 97s ｜ 候选 5 只（★为主推）</div>
-<div class="pick">
-  <div class="phead"><span class="pnm">#1 锦龙股份 <small>000712</small></span>
-    <span class="pscore">★主推 得分 68.1</span>
-    <span class="pprice">现价 10.78（+2.37%）成交额13.4亿</span></div>
-  <ul class="why"><li>20日动量+7.6%处于强势区</li><li>EXPMA12>EXPMA50多头</li><li>价格站稳EXPMA12(10.30)</li><li>三线战法：MA5>MA10>MA20多头排列</li><li>123法则无下跌确认信号</li></ul>
-  <div class="prow"><b>买入条件：</b>回踩EXPMA12(10.30)或5日线(10.45)缩量不破低吸；放量突破今日最高10.78可追（需盘中确认）</div>
-  <div class="prow"><b>止损位：</b>买入价-5%(10.24)或跌破EXPMA50(10.07)，二选一先到先执行</div>
-  <div class="prow"><b>目标位：</b>第一目标11.64(+8%)；第二目标12.07(+12%)或60日高点13.84附近</div>
-  <div class="prow"><b>失效条件：</b>①跌破EXPMA50且放量 ②主力净流入连续2日转负 ③买入后5个交易日未脱离成本3%%以上</div>
+</div>
+
+<div class="sec"><h2>🎯 每日选股 · 候选池 <small>（全A海扫 → 截面筛选 → 多因子打分 → 资金加成；铁律#13：宁做短不做长，弹性不足直接剔除）</small></h2><div class="pmeta">生成于 2026-10-20 18:37:31 ｜ 扫描 5574 只 → 入池 250 → 打分 188 ｜ 耗时 94s ｜ 候选 5 只（★主推 3 只）｜ 数据源：新浪全市场+新浪日K+同花顺资金流(东财当前403降级)</div>
+<div class="pick primary">
+  <div class="phead">
+    <span class="rank">#1</span>
+    <span class="pnm">思特威 <small>688213</small></span>
+    <span class="ptag">★主推</span>
+    <span class="pprice" style="color:#e0322f">106.00（+6.53%）成交11.4亿 · 20日振幅4.3%</span>
+  </div>
+  <div class="scorebar"><div class="scorefill" style="width:80%"></div>
+    <span class="scorelabel">综合得分 <b>79.7</b> / 100</span></div>
+  <div class="fchs"><span class="fc">动量 15.7</span><span class="fc">趋势 25.0</span><span class="fc">量能 12.0</span><span class="fc">位置 0.0</span><span class="fc">形态 4.0</span><span class="fc">弹性 13.0</span><span class="fc" style="color:#e0322f;border-color:#e0322f">资金 +7,235万</span></div>
+  <ul class="why"><li>20日动量+14.3%处于强势区</li><li>EXPMA12>EXPMA50多头</li><li>价格站稳EXPMA12(98.35)</li><li>三线战法：MA5>MA10>MA20多头排列</li><li>量比1.50温和放量</li><li>123法则无下跌确认信号</li><li>弹性优：近20日平均振幅4.3%</li><li>同花顺主力净流入+7235万(资金加成)</li></ul>
+  <div class="prow pb"><b>🛒 买入条件</b>回踩EXPMA12(98.35)或5日线(99.90)缩量不破低吸；放量突破今日最高106.00可追（需盘中确认）</div>
+  <div class="prow ps"><b>🛑 止损位</b>买入价-5%(100.70)或跌破EXPMA50(95.92)，二选一先到先执行</div>
+  <div class="prow pt"><b>🎯 目标位</b>第一目标114.48(+8%)；第二目标118.72(+12%)或60日高点106.89附近</div>
+  <div class="prow pi"><b>⛔ 失效条件</b>①跌破EXPMA50且放量 ②主力净流入连续2日转负 ③买入后5个交易日未脱离成本3%%以上</div>
+</div>
+<div class="pick primary">
+  <div class="phead">
+    <span class="rank">#2</span>
+    <span class="pnm">达实智能 <small>002421</small></span>
+    <span class="ptag">★主推</span>
+    <span class="pprice" style="color:#e0322f">3.35（+5.02%）成交14.1亿 · 20日振幅4.8%</span>
+  </div>
+  <div class="scorebar"><div class="scorefill" style="width:74%"></div>
+    <span class="scorelabel">综合得分 <b>73.7</b> / 100</span></div>
+  <div class="fchs"><span class="fc">动量 13.7</span><span class="fc">趋势 15.0</span><span class="fc">量能 12.0</span><span class="fc">位置 6.0</span><span class="fc">形态 4.0</span><span class="fc">弹性 13.0</span><span class="fc" style="color:#e0322f;border-color:#e0322f">资金 +9,158万</span></div>
+  <ul class="why"><li>20日动量+3.7%处于强势区</li><li>EXPMA12>EXPMA50多头</li><li>价格站稳EXPMA12(3.22)</li><li>量比2.25温和放量</li><li>123法则无下跌确认信号</li><li>弹性优：近20日平均振幅4.8%</li><li>同花顺主力净流入+9158万(资金加成)</li></ul>
+  <div class="prow pb"><b>🛒 买入条件</b>回踩EXPMA12(3.22)或5日线(3.19)缩量不破低吸；放量突破今日最高3.35可追（需盘中确认）</div>
+  <div class="prow ps"><b>🛑 止损位</b>买入价-5%(3.18)或跌破EXPMA50(3.18)，二选一先到先执行</div>
+  <div class="prow pt"><b>🎯 目标位</b>第一目标3.62(+8%)；第二目标3.75(+12%)或60日高点3.88附近</div>
+  <div class="prow pi"><b>⛔ 失效条件</b>①跌破EXPMA50且放量 ②主力净流入连续2日转负 ③买入后5个交易日未脱离成本3%%以上</div>
+</div>
+<div class="pick primary">
+  <div class="phead">
+    <span class="rank">#3</span>
+    <span class="pnm">锦龙股份 <small>000712</small></span>
+    <span class="ptag">★主推</span>
+    <span class="pprice" style="color:#e0322f">10.78（+2.37%）成交13.4亿 · 20日振幅4.3%</span>
+  </div>
+  <div class="scorebar"><div class="scorefill" style="width:72%"></div>
+    <span class="scorelabel">综合得分 <b>71.6</b> / 100</span></div>
+  <div class="fchs"><span class="fc">动量 17.6</span><span class="fc">趋势 25.0</span><span class="fc">量能 6.0</span><span class="fc">位置 6.0</span><span class="fc">形态 4.0</span><span class="fc">弹性 13.0</span><span class="fc" style="color:#00a37a;border-color:#00a37a">资金 -975万</span></div>
+  <ul class="why"><li>20日动量+7.6%处于强势区</li><li>EXPMA12>EXPMA50多头</li><li>价格站稳EXPMA12(10.30)</li><li>三线战法：MA5>MA10>MA20多头排列</li><li>123法则无下跌确认信号</li><li>弹性优：近20日平均振幅4.3%</li><li>同花顺主力净流出-975万(无加成)</li></ul>
+  <div class="prow pb"><b>🛒 买入条件</b>回踩EXPMA12(10.30)或5日线(10.45)缩量不破低吸；放量突破今日最高10.78可追（需盘中确认）</div>
+  <div class="prow ps"><b>🛑 止损位</b>买入价-5%(10.24)或跌破EXPMA50(10.07)，二选一先到先执行</div>
+  <div class="prow pt"><b>🎯 目标位</b>第一目标11.64(+8%)；第二目标12.07(+12%)或60日高点13.84附近</div>
+  <div class="prow pi"><b>⛔ 失效条件</b>①跌破EXPMA50且放量 ②主力净流入连续2日转负 ③买入后5个交易日未脱离成本3%%以上</div>
 </div>
 <div class="pick">
-  <div class="phead"><span class="pnm">#2 思特威 <small>688213</small></span>
-    <span class="pscore">★主推 得分 64.8</span>
-    <span class="pprice">现价 106.00（+6.53%）成交额11.4亿</span></div>
-  <ul class="why"><li>20日动量+14.3%处于强势区</li><li>EXPMA12>EXPMA50多头</li><li>价格站稳EXPMA12(98.35)</li><li>三线战法：MA5>MA10>MA20多头排列</li><li>量比1.50温和放量</li><li>123法则无下跌确认信号</li></ul>
-  <div class="prow"><b>买入条件：</b>回踩EXPMA12(98.35)或5日线(99.90)缩量不破低吸；放量突破今日最高106.00可追（需盘中确认）</div>
-  <div class="prow"><b>止损位：</b>买入价-5%(100.70)或跌破EXPMA50(95.92)，二选一先到先执行</div>
-  <div class="prow"><b>目标位：</b>第一目标114.48(+8%)；第二目标118.72(+12%)或60日高点106.89附近</div>
-  <div class="prow"><b>失效条件：</b>①跌破EXPMA50且放量 ②主力净流入连续2日转负 ③买入后5个交易日未脱离成本3%%以上</div>
+  <div class="phead">
+    <span class="rank">#4</span>
+    <span class="pnm">均胜电子 <small>600699</small></span>
+    <span class="ptag">备选</span>
+    <span class="pprice" style="color:#e0322f">21.24（+3.11%）成交19.0亿 · 20日振幅6.1%</span>
+  </div>
+  <div class="scorebar"><div class="scorefill" style="width:72%"></div>
+    <span class="scorelabel">综合得分 <b>71.6</b> / 100</span></div>
+  <div class="fchs"><span class="fc">动量 15.6</span><span class="fc">趋势 15.0</span><span class="fc">量能 12.0</span><span class="fc">位置 6.0</span><span class="fc">形态 0.0</span><span class="fc">弹性 13.0</span><span class="fc" style="color:#e0322f;border-color:#e0322f">资金 +1,393万</span></div>
+  <ul class="why"><li>20日动量+14.4%处于强势区</li><li>EXPMA12>EXPMA50多头</li><li>价格站稳EXPMA12(20.68)</li><li>量比1.59温和放量</li><li>弹性优：近20日平均振幅6.1%</li><li>同花顺主力净流入+1393万(资金加成)</li></ul>
+  <div class="prow pb"><b>🛒 买入条件</b>回踩EXPMA12(20.68)或5日线(20.00)缩量不破低吸；放量突破今日最高21.24可追（需盘中确认）</div>
+  <div class="prow ps"><b>🛑 止损位</b>买入价-5%(20.18)或跌破EXPMA50(20.43)，二选一先到先执行</div>
+  <div class="prow pt"><b>🎯 目标位</b>第一目标22.94(+8%)；第二目标23.79(+12%)或60日高点24.50附近</div>
+  <div class="prow pi"><b>⛔ 失效条件</b>①跌破EXPMA50且放量 ②主力净流入连续2日转负 ③买入后5个交易日未脱离成本3%%以上</div>
 </div>
 <div class="pick">
-  <div class="phead"><span class="pnm">#3 达实智能 <small>002421</small></span>
-    <span class="pscore">★主推 得分 60.5</span>
-    <span class="pprice">现价 3.35（+5.02%）成交额14.1亿</span></div>
-  <ul class="why"><li>20日动量+3.7%处于强势区</li><li>EXPMA12>EXPMA50多头</li><li>价格站稳EXPMA12(3.22)</li><li>量比2.25温和放量</li><li>123法则无下跌确认信号</li></ul>
-  <div class="prow"><b>买入条件：</b>回踩EXPMA12(3.22)或5日线(3.19)缩量不破低吸；放量突破今日最高3.35可追（需盘中确认）</div>
-  <div class="prow"><b>止损位：</b>买入价-5%(3.18)或跌破EXPMA50(3.18)，二选一先到先执行</div>
-  <div class="prow"><b>目标位：</b>第一目标3.62(+8%)；第二目标3.75(+12%)或60日高点3.88附近</div>
-  <div class="prow"><b>失效条件：</b>①跌破EXPMA50且放量 ②主力净流入连续2日转负 ③买入后5个交易日未脱离成本3%%以上</div>
-</div>
-<div class="pick">
-  <div class="phead"><span class="pnm">#4 农业银行 <small>601288</small></span>
-    <span class="pscore">备选 得分 58.0</span>
-    <span class="pprice">现价 7.41（-1.07%）成交额33.8亿</span></div>
-  <ul class="why"><li>20日动量+5.9%处于强势区</li><li>EXPMA12>EXPMA50多头</li><li>价格站稳EXPMA12(7.20)</li><li>三线战法：MA5>MA10>MA20多头排列</li><li>123法则无下跌确认信号</li></ul>
-  <div class="prow"><b>买入条件：</b>回踩EXPMA12(7.20)或5日线(7.32)缩量不破低吸；放量突破今日最高7.41可追（需盘中确认）</div>
-  <div class="prow"><b>止损位：</b>买入价-5%(7.04)或跌破EXPMA50(6.92)，二选一先到先执行</div>
-  <div class="prow"><b>目标位：</b>第一目标8.00(+8%)；第二目标8.30(+12%)或60日高点7.54附近</div>
-  <div class="prow"><b>失效条件：</b>①跌破EXPMA50且放量 ②主力净流入连续2日转负 ③买入后5个交易日未脱离成本3%%以上</div>
-</div>
-<div class="pick">
-  <div class="phead"><span class="pnm">#5 中国银行 <small>601988</small></span>
-    <span class="pscore">备选 得分 57.8</span>
-    <span class="pprice">现价 7.18（+0.98%）成交额22.0亿</span></div>
-  <ul class="why"><li>20日动量+8.1%处于强势区</li><li>EXPMA12>EXPMA50多头</li><li>价格站稳EXPMA12(6.94)</li><li>三线战法：MA5>MA10>MA20多头排列</li><li>123法则无下跌确认信号</li><li>创20日新高</li></ul>
-  <div class="prow"><b>买入条件：</b>回踩EXPMA12(6.94)或5日线(7.06)缩量不破低吸；放量突破今日最高7.18可追（需盘中确认）</div>
-  <div class="prow"><b>止损位：</b>买入价-5%(6.82)或跌破EXPMA50(6.53)，二选一先到先执行</div>
-  <div class="prow"><b>目标位：</b>第一目标7.75(+8%)；第二目标8.04(+12%)或60日高点7.20附近</div>
-  <div class="prow"><b>失效条件：</b>①跌破EXPMA50且放量 ②主力净流入连续2日转负 ③买入后5个交易日未脱离成本3%%以上</div>
+  <div class="phead">
+    <span class="rank">#5</span>
+    <span class="pnm">东岳硅材 <small>300821</small></span>
+    <span class="ptag">备选</span>
+    <span class="pprice" style="color:#00a37a">16.98（-0.18%）成交20.0亿 · 20日振幅5.8%</span>
+  </div>
+  <div class="scorebar"><div class="scorefill" style="width:62%"></div>
+    <span class="scorelabel">综合得分 <b>62.1</b> / 100</span></div>
+  <div class="fchs"><span class="fc">动量 14.1</span><span class="fc">趋势 25.0</span><span class="fc">量能 0.0</span><span class="fc">位置 6.0</span><span class="fc">形态 4.0</span><span class="fc">弹性 13.0</span><span class="fc" style="color:#00a37a;border-color:#00a37a">资金 -6,082万</span></div>
+  <ul class="why"><li>20日动量+15.9%处于强势区</li><li>EXPMA12>EXPMA50多头</li><li>价格站稳EXPMA12(16.94)</li><li>三线战法：MA5>MA10>MA20多头排列</li><li>123法则无下跌确认信号</li><li>弹性优：近20日平均振幅5.8%</li><li>同花顺主力净流出-6082万(无加成)</li></ul>
+  <div class="prow pb"><b>🛒 买入条件</b>回踩EXPMA12(16.94)或5日线(17.60)缩量不破低吸；放量突破今日最高16.98可追（需盘中确认）</div>
+  <div class="prow ps"><b>🛑 止损位</b>买入价-5%(16.13)或跌破EXPMA50(16.28)，二选一先到先执行</div>
+  <div class="prow pt"><b>🎯 目标位</b>第一目标18.34(+8%)；第二目标19.02(+12%)或60日高点20.58附近</div>
+  <div class="prow pi"><b>⛔ 失效条件</b>①跌破EXPMA50且放量 ②主力净流入连续2日转负 ③买入后5个交易日未脱离成本3%%以上</div>
 </div></div>
+
+<div class="sec"><h2>🔬 模型回测战绩 <small>（两年真实日线回测 · 验证量化模型是否真能选出超短强势股）</small></h2><div class="mod">回测尚未生成（首次运行需拉取全市场500日K，约10-15分钟，之后复用）</div></div>
+
 <div class="ft">
-  <h3>修订记录</h3>
-  <ol><li><b>v1.0</b>（2026-10-20）：持仓盯盘页上线：实时行情/盈亏/异动/60秒刷新</li><li><b>v2.0</b>（2026-10-20）：①版本徽章+修订历史+铁律摘要 ②每只显示持仓数 ③原“做T预案”拆分为「分时做T指导」「日线波段指导」「超短交易纪律」三模块 ④新增每日选股候选池板块</li></ol>
-  <h3>铁律（项目宪法）</h3>
-  <div>①决策权在你，模型只给依据禁指令话术 ②诚实红线：亏就是亏禁报喜藏忧 ③无依据不出票 ④先回测后模拟盘再实盘 ⑤每票预设数字止损触发即执行 ⑥计划外交易必须登记 ⑦数据不许猜不许编 ⑧全部版本化留修订记录 ⑨财联社任务线隔离不碰 ⑩中线≤2个自然月 ⑪仓位框架不盘中破 ⑫每周复盘闭环</div>
-  <h3>数据口径</h3>
-  <div>实时行情：腾讯行情接口（分钟级快照，收盘后量比字段失真故盘后隐藏）；日线因子：新浪日K（EXPMA/均线/支撑压力/123法则）；主力净额：同花顺口径（超大单+大单），取自资金流账本最近交易日。选股引擎数据源：新浪全市场截面+新浪日K+同花顺资金流（东财接口当前403降级）。<br>
+  <h3>📝 修订记录</h3>
+  <ol><li><b>v1.0</b>（2026-10-20）：持仓盯盘页上线：实时行情/盈亏/异动/60秒刷新</li><li><b>v2.0</b>（2026-10-20）：①版本徽章+修订历史+铁律摘要 ②每只显示持仓数 ③原“做T预案”拆分为「分时做T指导」「日线波段指导」「超短交易纪律」三模块 ④新增每日选股候选池板块</li><li><b>v3.0</b>（2026-10-20）：①修复日线因子高低点取数错误（原误用收盘价序列，支撑/压力/123法则失真）②新增「盘后作战指令」模块：明日/未来几日走留判断+具体价位（持仓止损改按成本基准）③分类排版重设计：深色作战总览带+持仓作战区+选股区+回测战绩区 ④关键价位色块条（止损/成本/现价/EXPMA/压力/目标，附距离%）⑤补齐指标：仓位占比/止损距离/目标距离/EXPMA位置/当日振幅/20日平均振幅 ⑥铁律#13「宁做短不做长」落地：选股引擎新增弹性因子（近20日平均振幅，硬门槛2%），权重重构为动量20趋势25量能12位置12形态8弹性13资金10⑦选股区改版：因子分解+资金流呈现；回测战绩区上线（两年真实日线回测）</li></ol>
+  <h3>⚖️ 铁律（项目宪法，13条）</h3>
+  <div class="rules2"><ol><li>决策权在你，模型只给依据、禁指令话术</li><li>诚实红线：亏就是亏，禁报喜藏忧</li><li>无依据不出票</li><li>先回测、再模拟盘30天、后实盘</li><li>每票预设数字止损，触发即执行</li><li>计划外交易必须登记</li><li>数据不许猜、不许编</li><li>全部版本化，留修订记录</li><li>财联社任务线隔离不碰</li><li>中线≤2个自然月</li><li>仓位框架不盘中破</li><li>每周复盘闭环</li><li>宁做短不做长：只选超短期弹性优、上涨快的标的（近20日平均振幅≥2%硬门槛）；选不出就不做，绝不放宽标准、绝不为做而做</li></ol></div>
+  <h3>🔎 数据口径与读图说明</h3>
+  <div>实时行情：腾讯行情接口（分钟级快照；收盘后量比字段失真故盘后隐藏「量比」）。日线因子：新浪日K（EXPMA12/50、MA5/10/20、近10日支撑压力、60日高低、123法则下跌确认计数）。主力净额：同花顺口径（超大单+大单净额），取自资金流账本最近交易日，每个交易日15:45后更新。选股引擎：新浪全市场截面+新浪日K+同花顺资金流（东财接口当前403降级为备援）。回测引擎：新浪全市场500日K本地矩阵，T-1收盘信号、T日收盘成交。<br>
+  读图说明：🛑止损=成本价-5%（铁律#5，触发无条件执行）；🎯目标=成本价+8%第一目标；EXPMA位置距离为现价相对均线的偏离度；日内位置0%=今日最低、100%=今日最高。四模块颜色：蓝=分时/持有信号、紫=日线波段、橙红=离场/减仓信号、灰=观察。<br>
   本平台为信息与规则工具，非持牌投顾服务；所有操作由你决策，盈亏由你承担。策略指导均为条件式参考，触发条件与依据已在各模块列明。</div>
 </div>
 </body>
