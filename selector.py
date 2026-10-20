@@ -83,6 +83,18 @@ def fetch_kline(symbol, datalen=62):
     return out
 
 
+def fetch_index_chg20(symbol="sh000300"):
+    """拉宽基指数(沪深300)日K，返回最近20日收益率(百分比)，作为市场基准算 RS 相对强度。
+    M4 数据进化：实时场景用大盘指数代理"市场"，与回测版(全市场等权指数)口径近似。"""
+    kl = fetch_kline(symbol, datalen=62)
+    if len(kl) < 21:
+        return 0.0
+    try:
+        return (kl[-1][4] / kl[-21][4] - 1) * 100
+    except Exception:
+        return 0.0
+
+
 def fetch_fund_ths(code, market):
     """同花顺资金流（复用 ths_common 已验证路径 fundsData.largeOrderFlow）。
     marketId 映射经实测：深市33；沪市先试17、备选22。"""
@@ -151,7 +163,7 @@ def calc_factors(kl):
     }
 
 
-def score_stock(f, today_chg, fund=None):
+def score_stock(f, today_chg, fund=None, mkt_chg20=None):
     """M3.5 胜出信号 S3「横盘突破」打分 + 理由。返回 (score, reasons[], detail)。
     核心：越贴近20日新高(near_hi20)越优先；在2-4%横盘带内越偏好更高弹性(amp20)——
     贴合铁律#13「宁做短不做长」：弹性越好、超短爆发力越强。同花顺主力净流入作实时版独有微弱加成。"""
@@ -166,6 +178,12 @@ def score_stock(f, today_chg, fund=None):
     why.append("弹性优：近20日平均振幅%.1f%%（2-4%%紧横盘带，越接近4%%爆发力越强）" % amp)
     detail = {"贴近度": round(prox * 100, 1), "弹性": round(elasticity, 1),
               "5日涨幅": round(f["chg5"], 1), "123法则": f["bear_confirm"]}
+    # M4 数据进化：相对强度 RS 软打分（个股20日收益 - 市场20日收益，小数口径与回测同口径）
+    if mkt_chg20 is not None:
+        rs = (f["chg20"] / 100.0) - (mkt_chg20 / 100.0)
+        s += rs * 5
+        detail["RS"] = round(rs * 100, 1)
+        why.append("相对强度RS%+1.1f%%（近20日跑赢大盘）" % (rs * 100))
     # 实时版独有：主力资金加成（仅在净流入为正时加分，作为同因子并集的优选 tiebreaker）
     if fund:
         mass, big = fund
@@ -202,6 +220,8 @@ def hard_filter(kl, row, f):
 
 def run(pool_limit=500, topn=3):
     t0 = time.time()
+    mkt_chg20 = fetch_index_chg20()
+    log("市场基准(沪深300近20日收益): %.1f%%" % mkt_chg20)
     market = fetch_market()
     # 第一层：截面筛选（非ST/非北交所/成交额门槛/当日涨幅区间），按成交额排序取前pool_limit
     cand = []
@@ -236,7 +256,7 @@ def run(pool_limit=500, topn=3):
         reason = hard_filter(kl, r, f)
         if reason:
             continue
-        sc, why, detail = score_stock(f, float(r.get("changepercent") or 0))
+        sc, why, detail = score_stock(f, float(r.get("changepercent") or 0), mkt_chg20=mkt_chg20)
         scored.append({
             "code": r["code"], "name": r["name"], "symbol": sym,
             "price": float(r["trade"]), "chg": float(r.get("changepercent") or 0),
