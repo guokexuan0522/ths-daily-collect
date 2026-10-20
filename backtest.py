@@ -68,6 +68,7 @@ def precompute(z):
     F["vol_ratio"] = V / np.maximum(roll_mean(V, 5), 1)
     F["pos60"] = C / np.maximum(roll_max(H, 60), 1e-9)
     F["amp20"] = roll_mean((H - L) / np.maximum(C, 1e-9), 20)
+    F["hi20"] = roll_max(H, 20)          # 近20日最高（S3 逼近新高用）
     F["C"] = C                            # 收盘价（score_slice 复用）
     F["amt"] = V * C                      # 成交额(元)
     # 123法则下跌确认计数（向量化近似）
@@ -83,31 +84,25 @@ def precompute(z):
 
 
 def score_slice(F, t, is_st):
-    """t 日截面打分（用 t-1 日因子，t 即信号日）。返回 (scores, mask_ok)"""
+    """M3.5 胜出信号 S3「横盘突破」：低位横盘蓄势 + 逼近20日新高 + 无下跌确认。
+    经 signal_lab 验证：组合+55.1% / 胜率50.2% / 单笔期望+0.189%，
+    同时碾压随机基线(-43%)与流动性等权买入持有(-12%)，8个参数变体全部为正。
+    返回 (scores, mask_ok)；score 仅用于同日内排序。"""
     tm = t - 1
-    chg20 = F["chg20"][:, tm]
-    m20 = np.clip(1 - np.abs(chg20 - 0.10) * 1.2, 0, 1) * 20
-    trend = ((F["e12"][:, tm] > F["e50"][:, tm]).astype(float) * 10
-             + (F["C"][:, tm] > F["e12"][:, tm]).astype(float) * 5
-             + ((F["ma5"][:, tm] > F["ma10"][:, tm]) &
-                (F["ma10"][:, tm] > F["ma20"][:, tm])).astype(float) * 10)
-    vr = F["vol_ratio"][:, tm]
-    vol = np.where((vr >= 1.5) & (vr <= 3.5), 15, np.where((vr >= 1.0) & (vr < 1.5), 8, 0))
-    pos = F["pos60"][:, tm]
-    pos_s = np.where(pos < 0.75, 15, np.where(pos < 0.9, 8, 0))
-    form = (F["bear"][:, tm] == 0).astype(float) * 5 + \
-           (pos >= 0.995).astype(float) * 5
-    # 弹性15：amp20 分位线性（前40%满分）
-    amp = F["amp20"][:, tm]
-    thr40 = np.quantile(amp, 0.60)
-    elas = np.clip(amp / max(thr40, 1e-9), 0, 1) * 15
-    total = m20 + trend + vol + pos_s + form + elas
-    # 硬过滤
-    ok = (~is_st
-          & (F["amp20"][:, tm] >= 0.02)            # 弹性硬门槛（铁律#13）
-          & (F["chg5"][:, tm] <= 0.25)             # 5日不爆炒
-          & (F["C"][:, tm] > 1.0))                 # 剔除极低价
-    return total, ok
+    c = F["C"][:, tm]
+    hi20 = F["hi20"][:, tm]
+    amp = F["amp20"][:, tm]            # 小数(0.03=3%)
+    c5 = F["chg5"][:, tm]             # 小数
+    bear = F["bear"][:, tm]
+    amt = F["amt"][:, tm]
+    near_hi = c >= 0.97 * hi20        # 距20日高<3%
+    ok = (~is_st & (amp >= 0.02) & (amp <= 0.04)
+          & (c5 > 0) & (c5 < 0.12) & near_hi & (bear == 0)
+          & (c > 1.0) & (amt >= 2e8))
+    # 评分：越贴近20日新高越优先；在2-4%紧横盘带内越偏好更高弹性(amp)——
+    # 贴合铁律#13「宁做短不做长」：弹性越好、超短爆发力越强（与实时 selector 对齐）
+    score = (c / np.maximum(hi20, 1e-9)) + amp * 5
+    return score, ok
 
 
 def simulate(pick_fn, F, C, V, is_st, codes, names, dates, start, T):
@@ -155,16 +150,21 @@ def simulate(pick_fn, F, C, V, is_st, codes, names, dates, start, T):
 
 
 def model_pick(t, need, F, V, is_st, rng):
+    """S3 模型选股：在 ok 集合内取评分最高的 need 只（与 signal_lab 口径一致，
+    不再叠加'成交额前250'额外池限制——那会误剔真正的中盘突破股）。"""
     scores, ok = score_slice(F, t + 1, is_st)
-    amt = F["amt"][:, t]
-    pool_mask = ok & (np.argsort(np.argsort(-amt)) < TOP_POOL)
-    scores = np.where(pool_mask, scores, -1)
-    top = np.argsort(-scores)[:need]
-    return [i for i in top if scores[i] > 0]
+    if not ok.any():
+        return []
+    idx = np.where(ok)[0]
+    order = idx[np.argsort(-scores[idx])]
+    return list(order[:need])
 
 
 def random_pick(t, need, F, V, is_st, rng):
-    ok = (~is_st) & (F["amp20"][:, t] >= 0.02) & (F["C"][:, t] > 1.0) & (V[:, t] > 0)
+    """随机基线（同流动性门槛/同规则，固定种子，可复现）：
+    与模型在同一'成交额>2亿'宇宙内随机选，确保公平对照。"""
+    ok = (~is_st) & (F["amp20"][:, t] >= 0.02) & (F["C"][:, t] > 1.0) \
+         & (F["amt"][:, t] >= 2e8) & (V[:, t] > 0)
     elig = np.where(ok)[0]
     if len(elig) == 0:
         return []
@@ -208,16 +208,20 @@ def run():
     m_ret, m_tr = simulate(model_pick, F, C, V, is_st, codes, names, dates, start, T)
     # 随机基线（同规则，固定种子，可复现）
     r_ret, r_tr = simulate(random_pick, F, C, V, is_st, codes, names, dates, start, T)
-    # 基准：全市场等权买入持有
-    bench = np.nanmean(C[:, start + 1:T] / np.maximum(C[:, start:T - 1], 1e-9) - 1, axis=0)
+    # 基准：流动性等权买入持有（与模型同一'成交额>2亿'宇宙，公平对照）
+    # 用中位数（非均值）避免个别极端日收益拉爆序列（均值会虚报+388%）
+    liq = (F["amt"] >= 2e8) & (~is_st[:, None]) & (F["C"] > 1.0)
+    daily = C[:, start + 1:T] / np.maximum(C[:, start:T - 1], 1e-9) - 1
+    bench = np.nanmedian(np.where(liq[:, start + 1:T], daily, np.nan), axis=0)
+    bench = bench[~np.isnan(bench)]
     bench_eq = np.cumprod(1 + bench)
     m_eq = np.cumprod(1 + np.array(m_ret))
     r_eq = np.cumprod(1 + np.array(r_ret))
 
-    metrics = metrics_from(m_tr, m_ret, "量化模型v1")
+    metrics = metrics_from(m_tr, m_ret, "量化模型v2(S3横盘突破)")
     metrics["区间"] = "%s ~ %s" % (dates[start], dates[T - 1])
     metrics["交易日数"] = T - 1 - start
-    metrics["基准(全市场等权)%"] = round(float((bench_eq[-1] - 1) * 100), 1)
+    metrics["基准(流动性等权)%"] = round(float((bench_eq[-1] - 1) * 100), 1)
     metrics["止损占比%"] = round(float(sum(1 for x in m_tr if x["reason"] == "止损") / max(len(m_tr), 1) * 100), 1)
     metrics["止盈占比%"] = round(float(sum(1 for x in m_tr if x["reason"] == "止盈") / max(len(m_tr), 1) * 100), 1)
     metrics["耗时秒"] = round(time.time() - t0, 1)
