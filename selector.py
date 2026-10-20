@@ -7,9 +7,10 @@
   资金：同花顺 funds 接口（对终选池逐只拉，主力净流入=超大单+大单）
   东财接口当前 403（出口IP被拦），列为增强源，恢复后切换。
 
-因子（0-100加权，全部透明可解释）：
-  动量25 趋势25(EXPMA/均线排列) 量能15 位置15 形态确认10 资金10
-  风控硬过滤：ST/退/次新(<60根K线)/60日回撤>50%/5日涨幅>25%/当日涨幅>7%
+因子（0-100加权，全部透明可解释；v3.0 起重构，铁律#13 弹性入模）：
+  动量20 趋势25(EXPMA/均线排列) 量能12 位置12 形态确认8 弹性13(近20日平均振幅) 资金10
+  弹性硬门槛：近20日平均振幅<2% 直接剔除（宁做短不做长，选不出就不做）
+  风控硬过滤：ST/退/北交所/次新(<60根K线)/60日回撤>50%/5日涨幅>25%/当日涨幅>7%
 铁律#3：每只输出入选理由+买入条件+止损位+目标位+失效条件。
 """
 import json
@@ -146,10 +147,11 @@ def calc_factors(kl):
 
 
 def score_stock(f, today_chg, fund=None):
-    """打分 + 理由。返回 (score, reasons[], detail)"""
+    """打分 + 理由。返回 (score, reasons[], detail)
+    v3.0 权重（铁律#13 弹性入模）：动量20 趋势25 量能12 位置12 形态8 弹性13 资金10 = 100"""
     s, why = 0.0, []
-    # 动量25（20日涨幅5-15%最佳，>25%扣）
-    m = max(0, 25 - abs(f["chg20"] - 10) * 1.2)
+    # 动量20（20日涨幅5-15%最佳，>25%扣）
+    m = max(0, 20 - abs(f["chg20"] - 10) * 1.0)
     s += m
     if 3 <= f["chg20"] <= 18:
         why.append("20日动量%+.1f%%处于强势区" % f["chg20"])
@@ -165,32 +167,44 @@ def score_stock(f, today_chg, fund=None):
         t += 10
         why.append("三线战法：MA5>MA10>MA20多头排列")
     s += t
-    # 量能15
+    # 量能12
     v = 0
     vr = f["vol_ratio"]
     if 1.5 <= vr <= 3.5:
-        v = 15
+        v = 12
         why.append("量比%.2f温和放量" % vr)
     elif 1.0 <= vr < 1.5:
-        v = 8
+        v = 6
     s += v
-    # 位置15
+    # 位置12
     p = 0
     if f["pos60"] < 0.75:
-        p = 15
+        p = 12
         why.append("位置低（60日高点下方%.0f%%）有空间" % ((1 - f["pos60"]) * 100))
     elif f["pos60"] < 0.9:
-        p = 8
+        p = 6
     s += p
-    # 形态确认10
+    # 形态确认8
     k = 0
     if f["bear_confirm"] == 0:
-        k += 5
+        k += 4
         why.append("123法则无下跌确认信号")
     if f["new_high20"]:
-        k += 5
+        k += 4
         why.append("创20日新高")
     s += k
+    # 弹性13（铁律#13 宁做短不做长：近20日平均振幅）
+    amp = f["amp20"]
+    e = 0
+    if amp >= 4:
+        e = 13
+        why.append("弹性优：近20日平均振幅%.1f%%" % amp)
+    elif amp >= 3:
+        e = 10
+        why.append("弹性良：近20日平均振幅%.1f%%" % amp)
+    elif amp >= 2:
+        e = 6
+    s += e
     # 资金10
     if fund:
         mass, big = fund
@@ -198,7 +212,8 @@ def score_stock(f, today_chg, fund=None):
         if main > 0:
             s += 10
             why.append("同花顺主力净流入%+.0f万" % (main / 1e4))
-    detail = {"动量": round(m, 1), "趋势": t, "量能": v, "位置": p, "形态": k}
+    detail = {"动量": round(m, 1), "趋势": t, "量能": v, "位置": p,
+              "形态": k, "弹性": e}
     return round(s, 1), why, detail
 
 
@@ -215,6 +230,8 @@ def hard_filter(kl, row, f):
         return "60日回撤%.0f%%阴跌股" % (f["dd60"] * 100)
     if f["chg5"] > 25:
         return "5日涨幅%.0f%%爆炒" % f["chg5"]
+    if f["amp20"] < 2.0:
+        return "弹性不足(近20日平均振幅%.1f%%<2%%)" % f["amp20"]   # 铁律#13
     return None
 
 
@@ -278,6 +295,11 @@ def run(pool_limit=250, topn=3):
             if main > 0:
                 r["score"] = round(r["score"] + 10, 1)
                 r["why"].append("同花顺主力净流入%+.0f万(资金加成)" % (main / 1e4))
+            else:
+                r["why"].append("同花顺主力净流出%+.0f万(无加成)" % (main / 1e4))
+        else:
+            r["fund_main"] = None
+            r["why"].append("同花顺资金流未取到(无加成)")
         time.sleep(1.0)
     finalists.sort(key=lambda x: x["score"], reverse=True)
 
@@ -304,6 +326,8 @@ def run(pool_limit=250, topn=3):
             "target": "第一目标%.2f(+8%%)；第二目标%.2f(+12%%)或60日高点%.2f附近" % (target1, target2, d["hi60"]),
             "invalid": "①跌破EXPMA50且放量 ②主力净流入连续2日转负 ③买入后5个交易日未脱离成本3%%以上",
             "amount_yi": round(r["amount_yi"], 2),
+            "fund_main": r.get("fund_main"),
+            "amp20": round(d["amp20"], 2),
         })
     result = {
         "generated_at": datetime.now().strftime("%F %T"),
