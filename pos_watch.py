@@ -22,7 +22,7 @@ LEDGER = DIR / "flows.jsonl"
 PICKS_FILE = DIR / "picks.json"
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
       "Referer": "https://gu.qq.com/"}
-VERSION = "v2.0"
+VERSION = "v3.1"
 
 REVISION_LOG = [
     ("v1.0", "2026-10-20", "持仓盯盘页上线：实时行情/盈亏/异动/60秒刷新"),
