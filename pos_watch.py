@@ -219,8 +219,15 @@ def build_rows():
 
         # ===== 模块四：盘后作战指令（明日/未来几日：走/留判断）=====
         if d:
-            stop_px = round(p["cost"] * 0.95, 2)   # 持仓止损按成本基准（铁律#5）
-            if pl_pct <= -8:
+            stop_px = round(min(p["cost"], q["price"]) * 0.95, 2)  # 当前有效止损位
+            px_stop = round(q["price"] * 0.95, 2)
+            if q["price"] <= p["cost"] * 0.95:
+                # 深套：成本止损线已跌穿，止损纪律已无可执行性，诚实重构指令
+                oh = ("【减仓】浮亏%.1f%%深套，成本止损线%.2f早已跌穿：明日反弹至EXPMA12（%.2f）"
+                      "附近坚决减仓降低敞口；若经你决策继续持有，以现价为基准重设止损%.2f（-5%%），"
+                      "跌破无条件清仓，不许再扛。"
+                      % (pl_pct, round(p["cost"] * 0.95, 2), d["expma12"], px_stop))
+            elif pl_pct <= -8:
                 oh = ("【减仓】浮亏%.1f%%已逼近止损线（%.2f）：明日反弹至EXPMA12（%.2f）附近减仓，"
                       "跌破%.2f无条件清仓，不扛。" % (pl_pct, stop_px, d["expma12"], stop_px))
             elif pl_pct >= 8:
@@ -265,7 +272,9 @@ def build_rows():
             "amp20": (sum((highs[i] - lows[i]) / max(closes[i], 1e-9)
                           for i in range(len(closes) - 20, len(closes))) / 20 * 100)
                      if len(closes) >= 20 else None,
-            "stop_px": round(p["cost"] * 0.95, 2),
+            "stop_px": round(min(p["cost"], q["price"]) * 0.95, 2),
+            "stop_basis": ("现价基准·成本止损已穿" if q["price"] <= p["cost"] * 0.95
+                           else "成本基准-5%"),
             "tgt_px": round(p["cost"] * 1.08, 2),
         })
         time.sleep(0.3)
