@@ -124,6 +124,13 @@ a{color:#74b9ff;text-decoration:none}
 .btt th{background:#f1f2f6;padding:5px 6px;text-align:left;font-size:11px;color:#636e72;white-space:nowrap}
 .btt td{padding:5px 6px;border-bottom:1px solid #eef0f4;white-space:nowrap}
 .btt tr:hover{background:#f7f8fa}
+/* 诚实对照条 + 结论 */
+.btcmp{display:flex;flex-wrap:wrap;gap:14px;align-items:baseline;background:#f7f8fa;border-radius:10px;padding:9px 12px;margin-bottom:8px;font-size:13px}
+.btcmp .cmp{font-weight:600}
+.btcmp .cmp b{font-size:17px;font-weight:800;margin:0 2px}
+.btcmp .cmp.sub{font-size:11px;color:#636e72;font-weight:400}
+.btverdict{border-left:5px solid #e0322f;background:#fdeceb;border-radius:0 10px 10px 0;padding:10px 14px;margin-bottom:10px;font-size:13.5px;line-height:1.7}
+.btverdict b{display:block;margin-bottom:2px;color:#c0392b}
 /* ===== 页脚 ===== */
 .ft{background:#fff;border-radius:12px;padding:14px;margin:14px 0;font-size:12px;color:#636e72;line-height:1.9;box-shadow:0 1px 3px rgba(0,0,0,.06)}
 .ft h3{font-size:13px;color:#2d3436;margin-bottom:6px}
@@ -142,7 +149,7 @@ a{color:#74b9ff;text-decoration:none}
   <div class="hdrow">
     <h1>📈 持仓作战平台<span class="badge">v3.0</span>
       <span class="lamp">🔴 已收盘·盘后复盘</span></h1>
-    <div class="meta">生成 2026-10-20 18:38:48 ｜ 每60秒自动刷新 ｜ <a href="flows.html">→ 资金流看板</a> ｜ 红=涨/盈利 · 绿=跌/亏损</div>
+    <div class="meta">生成 2026-10-20 19:00:28 ｜ 每60秒自动刷新 ｜ <a href="flows.html">→ 资金流看板</a> ｜ 红=涨/盈利 · 绿=跌/亏损</div>
   </div>
   <div class="ov">
     <div class="box"><label>总市值</label><b>396.26 万</b><div class="sub">总成本 648.69 万</div></div>
@@ -388,7 +395,7 @@ a{color:#74b9ff;text-decoration:none}
   <div class="prow pi"><b>⛔ 失效条件</b>①跌破EXPMA50且放量 ②主力净流入连续2日转负 ③买入后5个交易日未脱离成本3%%以上</div>
 </div></div>
 
-<div class="sec"><h2>🔬 模型回测战绩 <small>（两年真实日线回测 · 验证量化模型是否真能选出超短强势股）</small></h2><div class="mod">回测尚未生成（首次运行需拉取全市场500日K，约10-15分钟，之后复用）</div></div>
+<div class="sec"><h2>🔬 模型回测战绩 <small>（两年真实日线回测 · 验证量化模型是否真能选出超短强势股）</small></h2><div class="btgrid"><div class="btbox"><label>交易笔数</label><b style="color:#2d3436">320 笔</b></div><div class="btbox"><label>胜率</label><b style="color:#e17055">37.8%</b></div><div class="btbox"><label>平均盈利</label><b style="color:#e0322f">+7.21%</b></div><div class="btbox"><label>平均亏损</label><b style="color:#00a37a">-5.93%</b></div><div class="btbox"><label>盈亏比</label><b style="color:#0984e3">1.22</b></div><div class="btbox"><label>单笔期望</label><b style="color:#00a37a">-0.961%</b></div><div class="btbox"><label>组合总收益</label><b style="color:#00a37a">-69.5%</b></div><div class="btbox"><label>基准(全市场等权)</label><b style="color:#636e72">+23.7%</b></div><div class="btbox"><label>最大回撤</label><b style="color:#00a37a">-76.0%</b></div><div class="btbox"><label>平均持仓天数</label><b style="color:#2d3436">3.9 天</b></div><div class="btbox"><label>止损出场占比</label><b style="color:#e17055">44.1%</b></div><div class="btbox"><label>止盈出场占比</label><b style="color:#e0322f">19.1%</b></div></div><div class="btcmp">对照（同规则：等权≤3只/持有5日/止损-5%止盈+8%）：<span class="cmp m">量化模型 <b style="color:#00a37a">-69.5%</b></span><span class="cmp r">随机乱买 <b style="color:#e0322f">+98.4%</b></span><span class="cmp b">大盘等权 <b style="color:#636e72">+23.7%</b></span><span class="cmp sub">随机基线笔数273｜胜率53.8%｜最大回撤-23.3%</span></div><div class="btverdict" style="border-left-color:DOWN;background:#fdeceb"><b>诚实结论：</b>❌ 模型跑输随机：量化选股不仅没用、还为负 alpha，因子组合在反向选股。（模型 -69.5% ｜ 随机基线 +98.4% ｜ 大盘等权 +23.7%，同交易规则下随机都比模型赚得多）</div><div class="btnote">📋 回测口径（诚实声明）：T-1收盘信号,T日收盘成交;等权≤3只;持有5日;止损-5%/止盈+8%;无资金流历史故回测版无资金因子;随机基线同规则固定种子可复现。区间：2025-01-21 ~ 2026-10-20，共419个交易日。回测版因子不含资金流（无历史资金流数据，实时版才有）；未计滑点/停牌/涨跌停无法成交；止损-5%/止盈+8%。随机基线采用同套交易规则、固定随机种子，可复现，用于检验因子是否真有 alpha。历史回测不代表未来收益，用于验证模型逻辑是否成立。</div><table class="btt"><thead><tr><th>买入日</th><th>标的</th><th>买价</th><th>卖价</th><th>收益</th><th>持仓</th><th>出场原因</th></tr></thead><tbody><tr><td>2026-10-15</td><td>雪人集团 002639</td><td>15.37</td><td>14.51</td><td style="color:#00a37a">-5.60%</td><td>3天</td><td>止损</td></tr><tr><td>2026-10-14</td><td>莱美药业 300006</td><td>7.90</td><td>9.75</td><td style="color:#e0322f">+23.42%</td><td>3天</td><td>止盈</td></tr><tr><td>2026-10-13</td><td>东岳硅材 300821</td><td>19.25</td><td>18.01</td><td style="color:#00a37a">-6.44%</td><td>2天</td><td>止损</td></tr><tr><td>2026-10-13</td><td>露笑科技 002617</td><td>7.39</td><td>6.81</td><td style="color:#00a37a">-7.85%</td><td>2天</td><td>止损</td></tr><tr><td>2026-10-09</td><td>上海洗霸 603200</td><td>53.92</td><td>49.50</td><td style="color:#00a37a">-8.20%</td><td>3天</td><td>止损</td></tr><tr><td>2026-10-09</td><td>帝尔激光 300776</td><td>105.11</td><td>98.21</td><td style="color:#00a37a">-6.56%</td><td>2天</td><td>止损</td></tr><tr><td>2026-10-08</td><td>金辰股份 603396</td><td>31.91</td><td>28.78</td><td style="color:#00a37a">-9.81%</td><td>3天</td><td>止损</td></tr><tr><td>2026-09-28</td><td>光华科技 002741</td><td>25.74</td><td>23.73</td><td style="color:#00a37a">-7.81%</td><td>4天</td><td>止损</td></tr><tr><td>2026-09-28</td><td>国瓷材料 300285</td><td>65.06</td><td>60.20</td><td style="color:#00a37a">-7.47%</td><td>4天</td><td>止损</td></tr><tr><td>2026-09-28</td><td>康强电子 002119</td><td>29.71</td><td>25.80</td><td style="color:#00a37a">-13.16%</td><td>3天</td><td>止损</td></tr><tr><td>2026-09-23</td><td>科瑞技术 002957</td><td>43.88</td><td>41.40</td><td style="color:#00a37a">-5.65%</td><td>2天</td><td>止损</td></tr><tr><td>2026-09-22</td><td>顺络电子 002138</td><td>54.35</td><td>51.30</td><td style="color:#00a37a">-5.61%</td><td>3天</td><td>止损</td></tr><tr><td>2026-09-21</td><td>南亚新材 688519</td><td>322.96</td><td>295.08</td><td style="color:#00a37a">-8.63%</td><td>4天</td><td>止损</td></tr><tr><td>2026-09-16</td><td>通鼎互联 002491</td><td>24.45</td><td>24.03</td><td style="color:#00a37a">-1.72%</td><td>5天</td><td>到期</td></tr><tr><td>2026-09-15</td><td>宏昌电子 603002</td><td>18.81</td><td>19.34</td><td style="color:#e0322f">+2.82%</td><td>5天</td><td>到期</td></tr></tbody></table></div>
 
 <div class="ft">
   <h3>📝 修订记录</h3>
