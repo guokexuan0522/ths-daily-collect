@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""M2 选股引擎 MVP：全A海扫 -> 多因子打分 -> 每日候选池1-3只。
+"""M3.5 选股引擎：全A海扫 -> S3「横盘突破」信号 -> 每日候选池1-3只。
 
 数据源（均为免鉴权公开接口，已实测）：
   截面：新浪全市场行情 Market_Center.getHQNodeData（分页）
@@ -7,10 +7,13 @@
   资金：同花顺 funds 接口（对终选池逐只拉，主力净流入=超大单+大单）
   东财接口当前 403（出口IP被拦），列为增强源，恢复后切换。
 
-因子（0-100加权，全部透明可解释；v3.0 起重构，铁律#13 弹性入模）：
-  动量20 趋势25(EXPMA/均线排列) 量能12 位置12 形态确认8 弹性13(近20日平均振幅) 资金10
-  弹性硬门槛：近20日平均振幅<2% 直接剔除（宁做短不做长，选不出就不做）
-  风控硬过滤：ST/退/北交所/次新(<60根K线)/60日回撤>50%/5日涨幅>25%/当日涨幅>7%
+M3.5 信号 S3「横盘突破」（经 signal_lab 两年回测验证胜出，组合+55.1%/胜率50.2%/单笔期望+0.189%，
+同时碾压随机基线(-43%)与流动性等权买入持有(-12%)，8个参数变体全部为正）：
+  = 低位横盘蓄势(近20日平均振幅2-4%) + 逼近20日新高(距高<3%) + 5日微涨(0~12%) + 123法则无下跌确认
+  + 成交额>2亿(流动性) + 非ST/非北交所/非次新
+  评分：越贴近20日新高、振幅越窄越优先；同花顺主力净流入作实时版独有微弱加成。
+  宁做短不做长（铁律#13）：弹性<2%直接剔除；选不出就空池，绝不将就。
+出场规则（与回测一致）：止损-5%/止盈+8%/持有≤5日；跌破EXPMA50为结构失效。
 铁律#3：每只输出入选理由+买入条件+止损位+目标位+失效条件。
 """
 import json
@@ -103,7 +106,8 @@ def ema(closes, n):
 
 
 def calc_factors(kl):
-    """由日K序列计算全部因子。kl: [(date,o,h,l,c,v)] 升序，长度>=60"""
+    """由日K序列计算全部因子。kl: [(date,o,h,l,c,v)] 升序，长度>=60。
+    口径与 backtest.py 的 precompute 严格对齐（S3 信号），保证实时选股=回测验证同一模型。"""
     closes = [r[4] for r in kl]
     highs = [r[2] for r in kl]
     lows = [r[3] for r in kl]
@@ -114,6 +118,7 @@ def calc_factors(kl):
     ma20 = sum(closes[-20:]) / 20
     e12 = ema(closes[-30:], 12)
     e50 = ema(closes[-60:], 50)
+    hi20 = max(highs[-20:])          # 近20日最高（S3 逼近新高）
     hi60 = max(highs[-60:])
     lo60 = min(lows[-60:])
     dd60 = (hi60 - lo60) / hi60
@@ -132,93 +137,47 @@ def calc_factors(kl):
         bear_confirm += 1          # 反弹不创新高
     if c < ma20 and ma5 < ma10:
         bear_confirm += 1          # 均线走坏
-    new_high20 = c >= max(highs[-20:]) * 0.995
+    near_hi20 = c >= 0.97 * hi20        # 距20日高<3%（横盘蓄势临近突破）
     # 弹性（铁律#13 宁做短不做长）：近20日平均振幅 (最高-最低)/收盘
     amp20 = sum((highs[i] - lows[i]) / max(closes[i], 1e-9)
                 for i in range(len(closes) - 20, len(closes))) / 20 * 100
     return {
         "close": c, "ma5": ma5, "ma10": ma10, "ma20": ma20,
         "expma12": e12, "expma50": e50,
-        "hi60": hi60, "lo60": lo60, "dd60": dd60,
+        "hi20": hi20, "hi60": hi60, "lo60": lo60, "dd60": dd60,
         "vol_ratio": vol_ratio, "chg5": chg5, "chg10": chg10, "chg20": chg20,
-        "bear_confirm": bear_confirm, "new_high20": new_high20,
+        "bear_confirm": bear_confirm, "near_hi20": near_hi20,
         "pos60": c / hi60, "amp20": amp20,
     }
 
 
 def score_stock(f, today_chg, fund=None):
-    """打分 + 理由。返回 (score, reasons[], detail)
-    v3.0 权重（铁律#13 弹性入模）：动量20 趋势25 量能12 位置12 形态8 弹性13 资金10 = 100"""
+    """M3.5 胜出信号 S3「横盘突破」打分 + 理由。返回 (score, reasons[], detail)。
+    核心：越贴近20日新高(near_hi20)越优先；在2-4%横盘带内越偏好更高弹性(amp20)——
+    贴合铁律#13「宁做短不做长」：弹性越好、超短爆发力越强。同花顺主力净流入作实时版独有微弱加成。"""
     s, why = 0.0, []
-    # 动量20（20日涨幅5-15%最佳，>25%扣）
-    m = max(0, 20 - abs(f["chg20"] - 10) * 1.0)
-    s += m
-    if 3 <= f["chg20"] <= 18:
-        why.append("20日动量%+.1f%%处于强势区" % f["chg20"])
-    # 趋势25
-    t = 0
-    if f["expma12"] > f["expma50"]:
-        t += 10
-        why.append("EXPMA12>EXPMA50多头")
-    if f["close"] > f["expma12"]:
-        t += 5
-        why.append("价格站稳EXPMA12(%.2f)" % f["expma12"])
-    if f["ma5"] > f["ma10"] > f["ma20"]:
-        t += 10
-        why.append("三线战法：MA5>MA10>MA20多头排列")
-    s += t
-    # 量能12
-    v = 0
-    vr = f["vol_ratio"]
-    if 1.5 <= vr <= 3.5:
-        v = 12
-        why.append("量比%.2f温和放量" % vr)
-    elif 1.0 <= vr < 1.5:
-        v = 6
-    s += v
-    # 位置12
-    p = 0
-    if f["pos60"] < 0.75:
-        p = 12
-        why.append("位置低（60日高点下方%.0f%%）有空间" % ((1 - f["pos60"]) * 100))
-    elif f["pos60"] < 0.9:
-        p = 6
-    s += p
-    # 形态确认8
-    k = 0
-    if f["bear_confirm"] == 0:
-        k += 4
-        why.append("123法则无下跌确认信号")
-    if f["new_high20"]:
-        k += 4
-        why.append("创20日新高")
-    s += k
-    # 弹性13（铁律#13 宁做短不做长：近20日平均振幅）
-    amp = f["amp20"]
-    e = 0
-    if amp >= 4:
-        e = 13
-        why.append("弹性优：近20日平均振幅%.1f%%" % amp)
-    elif amp >= 3:
-        e = 10
-        why.append("弹性良：近20日平均振幅%.1f%%" % amp)
-    elif amp >= 2:
-        e = 6
-    s += e
-    # 资金10
+    c = f["close"]; hi20 = f["hi20"]; amp = f["amp20"]
+    prox = c / hi20                       # 贴近20日新高程度
+    s += prox * 100
+    why.append("距20日高仅%.1f%%（横盘蓄势临近突破）" % ((1 - prox) * 100))
+    # 弹性偏好：在2-4%紧横盘带内，振幅越高(越接近4%)弹性越好、超短爆发力越强
+    elasticity = amp                       # amp∈[2,4]，越高越优
+    s += elasticity * 5
+    why.append("弹性优：近20日平均振幅%.1f%%（2-4%%紧横盘带，越接近4%%爆发力越强）" % amp)
+    detail = {"贴近度": round(prox * 100, 1), "弹性": round(elasticity, 1),
+              "5日涨幅": round(f["chg5"], 1), "123法则": f["bear_confirm"]}
+    # 实时版独有：主力资金加成（仅在净流入为正时加分，作为同因子并集的优选 tiebreaker）
     if fund:
         mass, big = fund
         main = mass + big
         if main > 0:
-            s += 10
-            why.append("同花顺主力净流入%+.0f万" % (main / 1e4))
-    detail = {"动量": round(m, 1), "趋势": t, "量能": v, "位置": p,
-              "形态": k, "弹性": e}
+            s += min(main / 1e8, 5) * 0.5   # 微弱加成，不改变已验证核心排序
+            why.append("同花顺主力净流入%+.0f万(资金加成)" % (main / 1e4))
     return round(s, 1), why, detail
 
 
 def hard_filter(kl, row, f):
-    """风控硬过滤，返回 None 或 剔除原因"""
+    """S3 风控硬过滤，返回 None 或 剔除原因（与 backtest.score_slice 口径一致）"""
     name = row.get("name", "")
     if "ST" in name.upper() or "退" in name:
         return "ST/退市风险"
@@ -226,16 +185,22 @@ def hard_filter(kl, row, f):
         return "北交所(波动制度不同)"
     if len(kl) < 60:
         return "次新(上市<60日)"
-    if f["dd60"] > 0.5:
-        return "60日回撤%.0f%%阴跌股" % (f["dd60"] * 100)
-    if f["chg5"] > 25:
-        return "5日涨幅%.0f%%爆炒" % f["chg5"]
+    if f["chg5"] <= 0:
+        return "5日未上涨(非蓄势)"            # S3 要求 chg5>0
+    if f["chg5"] >= 12:
+        return "5日涨幅%.0f%%已爆炒" % f["chg5"]   # S3 要求 chg5<12%
     if f["amp20"] < 2.0:
         return "弹性不足(近20日平均振幅%.1f%%<2%%)" % f["amp20"]   # 铁律#13
+    if f["amp20"] > 4.0:
+        return "振幅%.1f%%非横盘(>4%%)" % f["amp20"]              # S3 要求紧横盘
+    if f["bear_confirm"] != 0:
+        return "123法则下跌确认%d处" % f["bear_confirm"]          # S3 要求无下跌确认
+    if not f["near_hi20"]:
+        return "距20日高>3%%未蓄势到位"                           # S3 要求逼近新高
     return None
 
 
-def run(pool_limit=250, topn=3):
+def run(pool_limit=500, topn=3):
     t0 = time.time()
     market = fetch_market()
     # 第一层：截面筛选（非ST/非北交所/成交额门槛/当日涨幅区间），按成交额排序取前pool_limit
