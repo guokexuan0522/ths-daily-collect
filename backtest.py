@@ -80,6 +80,20 @@ def precompute(z):
     F["bear"] = ((C < prev_lo).astype(np.int8)
                  + (hi10 < hi_prev10).astype(np.int8)
                  + ((C < F["ma20"]) & (F["ma5"] < F["ma10"])).astype(np.int8))
+    # ---- M4 数据进化：市场等权指数 EWIdx + 相对强度 RS ----
+    # 用流动性池(成交额>2亿)全市场等权日收益构造宽基代理指数，
+    # RS = 个股20日收益 - 市场20日收益（个股相对市场的强弱，经典相对强度因子）。
+    _liq = (F["amt"] >= 2e8) & (C > 1.0)
+    _ew = np.full(T, np.nan)
+    for tt in range(1, T):
+        _idx = np.where(_liq[:, tt - 1])[0]
+        if len(_idx):
+            _ew[tt] = float(np.nanmean(C[_idx, tt] / C[_idx, tt - 1] - 1))
+    _ewidx = np.cumprod(np.where(np.isnan(_ew), 1.0, 1 + _ew))
+    _mkt_chg20 = np.full(T, np.nan)
+    _mkt_chg20[20:] = _ewidx[20:] / _ewidx[:-20] - 1
+    F["mkt_chg20"] = _mkt_chg20
+    F["RS"] = F["chg20"] - _mkt_chg20         # 相对强度（个股 - 市场）
     return F
 
 
@@ -101,11 +115,14 @@ def score_slice(F, t, is_st):
           & (c > 1.0) & (amt >= 2e8))
     # 评分：越贴近20日新高越优先；在2-4%紧横盘带内越偏好更高弹性(amp)——
     # 贴合铁律#13「宁做短不做长」：弹性越好、超短爆发力越强（与实时 selector 对齐）
-    score = (c / np.maximum(hi20, 1e-9)) + amp * 5
+    # M4 数据进化：加相对强度 RS 软打分（个股20日收益-市场20日收益），
+    # 优先选"跑赢大盘的横盘突破股"，提升选股质量且不伤胜率（硬过滤反而会降胜率）。
+    rs = F["RS"][:, tm]
+    score = (c / np.maximum(hi20, 1e-9)) + amp * 5 + rs * 5
     return score, ok
 
 
-def simulate(pick_fn, F, C, V, is_st, codes, names, dates, start, T):
+def simulate(pick_fn, F, C, V, is_st, codes, names, dates, start, T, struct_exit=True):
     """事件驱动模拟：统一交易规则（等权≤3只/持有5日/止损-5%止盈+8%）。
     pick_fn(t, need) -> 当日 t 希望建仓的标的索引列表（≤need）。返回 (daily_ret, trades)。"""
     positions = []; daily_ret = []; trades = []
@@ -120,6 +137,8 @@ def simulate(pick_fn, F, C, V, is_st, codes, names, dates, start, T):
                 exit_reason = "止损"
             elif ret >= TP:
                 exit_reason = "止盈"
+            elif struct_exit and F["e50"][p["i"], t] is not None and C[p["i"], t] < F["e50"][p["i"], t]:
+                exit_reason = "结构失效"      # M4 算法进化：跌破EXPMA50=横盘突破结构破坏，立刻走，不硬等5日（模型启用；随机基线不启用以保持朴素对照）
             elif p["days"] >= HOLD_DAYS:
                 exit_reason = "到期"
             if exit_reason:
@@ -204,10 +223,10 @@ def run():
     print("因子预计算完成: %d只 x %d天, %.0fs" % (N, T, time.time() - t0))
 
     start = START_IDX
-    # 模型 v1
-    m_ret, m_tr = simulate(model_pick, F, C, V, is_st, codes, names, dates, start, T)
-    # 随机基线（同规则，固定种子，可复现）
-    r_ret, r_tr = simulate(random_pick, F, C, V, is_st, codes, names, dates, start, T)
+    # 模型 v3（M4：启用结构失效出场，控回撤）
+    m_ret, m_tr = simulate(model_pick, F, C, V, is_st, codes, names, dates, start, T, struct_exit=True)
+    # 随机基线（朴素规则、不启用结构失效，作为"无信号 alpha 底线"对照，固定种子可复现）
+    r_ret, r_tr = simulate(random_pick, F, C, V, is_st, codes, names, dates, start, T, struct_exit=False)
     # 基准：流动性等权买入持有（与模型同一'成交额>2亿'宇宙，公平对照）
     # 用中位数（非均值）避免个别极端日收益拉爆序列（均值会虚报+388%）
     liq = (F["amt"] >= 2e8) & (~is_st[:, None]) & (F["C"] > 1.0)
@@ -218,7 +237,7 @@ def run():
     m_eq = np.cumprod(1 + np.array(m_ret))
     r_eq = np.cumprod(1 + np.array(r_ret))
 
-    metrics = metrics_from(m_tr, m_ret, "量化模型v2(S3横盘突破)")
+    metrics = metrics_from(m_tr, m_ret, "量化模型v3(M4:横盘突破+RS+结构失效)")
     metrics["区间"] = "%s ~ %s" % (dates[start], dates[T - 1])
     metrics["交易日数"] = T - 1 - start
     metrics["基准(流动性等权)%"] = round(float((bench_eq[-1] - 1) * 100), 1)
@@ -234,7 +253,7 @@ def run():
         "equity_curve": [round(float(x), 4) for x in m_eq[::5]],
         "random_curve": [round(float(x), 4) for x in r_eq[::5]],
         "bench_curve": [round(float(x), 4) for x in bench_eq[::5]],
-        "assumptions": "T-1收盘信号,T日收盘成交;等权≤3只;持有5日;止损-5%/止盈+8%;无资金流历史故回测版无资金因子;随机基线同规则固定种子可复现",
+        "assumptions": "T-1收盘信号,T日收盘成交;等权≤3只;止损-5%/止盈+8%/结构失效(跌破EXPMA50即出,仅模型启用)/5日到期兜底;RS相对强度软打分;随机基线用朴素规则(无结构失效)作无信号alpha底线对照;无资金流历史故回测版无资金因子;固定种子可复现",
     }
 
     def _to_native(o):

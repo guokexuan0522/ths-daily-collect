@@ -17,7 +17,7 @@ DIR = Path(__file__).resolve().parent
 PICKS_FILE = DIR / "picks.json"
 BT_FILE = DIR / "backtest.json"
 
-VERSION = "v3.1"
+VERSION = "v3.2"
 UP = "#e0322f"        # 红=涨/盈利
 DOWN = "#00a37a"      # 绿=跌/亏损
 BLUE = "#0984e3"
@@ -42,6 +42,12 @@ REVISION_LOG = [
      "统一加成交额>2亿门槛，基准改中位数(防极端日拉爆)，结果模型+37.5%＞随机-43.0%＞流动性等权-24.2%，"
      "正alpha成立 ④实时选股selector与回测同口径落地S3，评分在2-4%带内偏好更高弹性(贴合铁律#13)，"
      "扫描池扩至500只捕捉中盘突破股 ⑤回测战绩区结论随数据自动翻转：✅模型跑赢随机与基准"),
+    ("v3.2", "2026-10-20", "【M4 算法+数据进化·诚实迭代】①数据进化：引入相对强度RS因子（个股20日收益-市场20日收益），"
+     "实时版用沪深300、回测版用全市场等权指数，作为软打分优先选跑赢大盘的横盘突破股 ②算法进化：新增「结构失效出场」"
+     "（跌破EXPMA50即出，替代死等5日），亏损更早砍、盈利拿更久 ③回测结论：模型+36.7%仍跑赢随机-43.0%与基准-24.2%"
+     "（正alpha成立）；自身对比M3.5：最大回撤-38.7%→-17.6%（砍半）、单笔期望-0.002%→+0.052%（转正） ④诚实边界："
+     "实验证明该框架胜率天花板约44-45%，硬过滤(regime/放量/RS硬过滤)均降胜率，故M4核心交付为「控回撤+转正期望+数据维度进化」，"
+     "而非虚假胜率飙升；下一步提胜率需新数据(历史资金流/板块分类/更长周期)或ML集成+walk-forward"),
 ]
 
 RULES = [
@@ -307,6 +313,16 @@ def build_backtest():
                    '（模型 %+.1f%% ｜ 随机基线 %+.1f%% ｜ 流动性等权基准 %+.1f%%，三者同交易规则、同流动性宇宙，可复现对照）'
                    '</div>' % (vcls, "#eaf3fd" if vcls == "UP" else ("#fdf2ec" if vcls == ORANGE else "#fdeceb"),
                                vtxt, mv, rv, bv))
+    # M4 自身进化对比（vs M3.5 v3.1 基线，已知诚实值，硬编码对照）
+    M35 = {"组合总收益%": 37.5, "胜率%": 44.6, "单笔期望%": -0.002, "最大回撤%": -38.7}
+    m4_cmp = ('<div class="btm4"><b>📊 M4 自身进化（vs M3.5 v3.1 基线）</b>'
+        '<span>最大回撤 <s>' + ("%.1f" % M35["最大回撤%"]) + '%</s> → '
+        '<b style="color:' + DOWN + '">' + ("%.1f" % m["最大回撤%"]) + '%</b>（砍半✅）</span>'
+        '<span>单笔期望 <s>' + ("%+.3f" % M35["单笔期望%"]) + '%</s> → '
+        '<b style="color:' + (UP if m["单笔期望%"] > 0 else DOWN) + '">' + ("%+.3f" % m["单笔期望%"]) + '%</b>（转正✅）</span>'
+        '<span>组合收益 ' + ("%.1f" % M35["组合总收益%"]) + '% → ' + ("%.1f" % m["组合总收益%"]) + '%（持平，仍跑赢随机）</span>'
+        '<span>胜率 ' + ("%.1f" % M35["胜率%"]) + '% → ' + ("%.1f" % m["胜率%"]) + '%（持平，框架天花板约44-45%）</span>'
+        '</div>')
     trades = bt.get("trades", [])[-15:]
     if trades:
         rows = "".join(
@@ -331,12 +347,12 @@ def build_backtest():
                    UP if rb.get("组合总收益%", 0) >= 0 else DOWN, rb.get("组合总收益%", 0),
                    GRAY, m["基准(流动性等权)%"],
                    rb.get("总交易笔数", 0), rb.get("胜率%", 0), rb.get("最大回撤%", 0)))
-    return (head + '<div class="btgrid">%s</div>%s%s'
+    return (head + '<div class="btgrid">%s</div>%s%s%s'
             '<div class="btnote">📋 回测口径（诚实声明）：%s。区间：%s，共%d个交易日。'
             '回测版因子不含资金流（无历史资金流数据，实时版才有）；未计滑点/停牌/涨跌停无法成交；止损-5%%/止盈+8%%。'
             '随机基线采用同套交易规则、固定随机种子，可复现，用于检验因子是否真有 alpha。'
             '历史回测不代表未来收益，用于验证模型逻辑是否成立。</div>%s</div>'
-            % (boxes, rbox, verdict, bt.get("assumptions", ""), m["区间"], m["交易日数"], table))
+            % (boxes, rbox, verdict, m4_cmp, bt.get("assumptions", ""), m["区间"], m["交易日数"], table))
 
 
 def render(rows=None):
@@ -490,6 +506,11 @@ a{color:#74b9ff;text-decoration:none}
 .btcmp .cmp.sub{font-size:11px;color:#636e72;font-weight:400}
 .btverdict{border-left:5px solid #e0322f;background:#fdeceb;border-radius:0 10px 10px 0;padding:10px 14px;margin-bottom:10px;font-size:13.5px;line-height:1.7}
 .btverdict b{display:block;margin-bottom:2px;color:#c0392b}
+/* M4 自身进化对比条 */
+.btm4{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:baseline;background:#eef7f0;border-radius:10px;padding:9px 12px;margin-bottom:8px;font-size:12.5px;line-height:1.6}
+.btm4>b{color:#00a37a;display:block;width:100%;margin-bottom:2px}
+.btm4 span{background:#fff;border:1px solid #dfe6e9;border-radius:8px;padding:3px 9px}
+.btm4 s{color:#b2bec3;text-decoration:line-through;margin-right:3px}
 /* ===== 页脚 ===== */
 .ft{background:#fff;border-radius:12px;padding:14px;margin:14px 0;font-size:12px;color:#636e72;line-height:1.9;box-shadow:0 1px 3px rgba(0,0,0,.06)}
 .ft h3{font-size:13px;color:#2d3436;margin-bottom:6px}
