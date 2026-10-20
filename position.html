@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="refresh" content="60">
+<title>持仓作战页 · 实时盯盘</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:#f5f6f8;color:#2d3436;padding:14px}
+.hd{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+h1{font-size:20px}.hd .meta{font-size:12px;color:#636e72}
+a{color:#0984e3;text-decoration:none}
+.ov{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.ov .box{background:#fff;border-radius:10px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.ov label{font-size:12px;color:#636e72;display:block;margin-bottom:4px}
+.ov b{font-size:20px}
+.card{background:#fff;border-radius:12px;padding:14px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.card.alert{border:2px solid #e17055}
+.chead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.nm{font-size:17px;font-weight:700}
+.px{font-size:30px;font-weight:800}
+.chg{font-size:16px;font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin-bottom:10px}
+.grid label{font-size:12px;color:#636e72;display:block}
+.grid b{font-size:14px;font-weight:600}
+.range{position:relative;height:22px;background:#dfe6e9;border-radius:11px;margin:8px 0;overflow:hidden}
+.rangefill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#00b89433,#d6303133)}
+.rangelabel{position:absolute;width:100%;text-align:center;font-size:12px;line-height:22px;color:#2d3436}
+.fund{font-size:13px;margin:6px 0;color:#636e72}
+.tac{font-size:14px;background:#f1f2f6;border-left:4px solid #0984e3;padding:8px 10px;border-radius:0 8px 8px 0;margin:6px 0}
+.alerts{margin-top:6px}
+.cls{display:inline-block;background:#dfe6e9;color:#636e72;font-size:11px;padding:2px 8px;border-radius:10px}
+.tag{display:inline-block;background:#ffeaa7;color:#d63031;font-size:12px;padding:2px 8px;border-radius:10px;margin:2px 4px 2px 0}
+.ft{font-size:12px;color:#b2bec3;margin-top:14px;line-height:1.7}
+</style>
+</head>
+<body>
+<div class="hd">
+  <h1>持仓作战页 <a href="flows.html">→ 资金流看板</a></h1>
+  <div class="meta">生成 2026-10-20 16:42:23 ｜ 每60秒自动刷新 ｜ 红=涨/盈利 绿=跌/亏损</div>
+</div>
+<div class="ov">
+  <div class="box"><label>总市值</label><b>396.26 万</b></div>
+  <div class="box"><label>持仓总盈亏</label><b style="color:#00b894">-252.44 万 (-38.91%%)</b></div>
+  <div class="box"><label>当日盈亏</label><b style="color:#d63031">+11.73 万</b></div>
+  <div class="box"><label>持仓数</label><b>4 只</b></div>
+</div>
+
+<div class="card alert">
+  <div class="chead">
+    <span class="nm">ST中路 <small>600818</small></span>
+    <span class="px" style="color:#d63031">8.40</span>
+    <span class="chg" style="color:#d63031">+3.32%</span>
+    <span class='cls'>已收盘</span>
+  </div>
+  <div class="grid">
+    <div><label>持仓盈亏</label><b style="color:#00b894">-7.44万 (-10.18%)</b></div>
+    <div><label>当日盈亏</label><b style="color:#d63031">+2.11万</b></div>
+    <div><label>成本线</label><b>9.352（现价距成本 -10.2%）</b></div>
+    <div><label>今日高/低</label><b>8.40 / 8.01（涨跌停 ±5%）</b></div>
+    <div><label>当日均价</label><b>8.28</b></div>
+    <div><label>量比/换手</label><b>- / 1.41%</b></div>
+  </div>
+  <div class="range"><div class="rangefill" style="width:100%"></div><div class="rangelabel">日内位置 100%（低8.01 → 高8.40）</div></div>
+  <div class="fund">2026-10-20 主力净额：<b style="color:#d63031">+205.76万</b> ｜ 成交额 2,786万</div>
+  <div class="tac"><b>做T预案：</b>已收盘：今日振幅4.8%（低8.01→高8.40），收于日内位置100%，做好明日预案即可，不盘后冲动决策</div>
+  <div class="alerts"><span class="tag">⚠ 涨跌幅3.32%≥3%</span><span class="tag">⚠ 临近涨停(8.54)</span></div>
+</div>
+<div class="card">
+  <div class="chead">
+    <span class="nm">景旺电子 <small>603228</small></span>
+    <span class="px" style="color:#d63031">88.38</span>
+    <span class="chg" style="color:#d63031">+1.70%</span>
+    <span class='cls'>已收盘</span>
+  </div>
+  <div class="grid">
+    <div><label>持仓盈亏</label><b style="color:#00b894">-0.80万 (-10.16%)</b></div>
+    <div><label>当日盈亏</label><b style="color:#d63031">+0.12万</b></div>
+    <div><label>成本线</label><b>98.376（现价距成本 -10.2%）</b></div>
+    <div><label>今日高/低</label><b>90.05 / 85.00（涨跌停 ±10%）</b></div>
+    <div><label>当日均价</label><b>88.23</b></div>
+    <div><label>量比/换手</label><b>- / 2.21%</b></div>
+  </div>
+  <div class="range"><div class="rangefill" style="width:67%"></div><div class="rangelabel">日内位置 67%（低85.00 → 高90.05）</div></div>
+  <div class="fund">2026-10-20 主力净额：<b style="color:#00b894">-2,438.82万</b> ｜ 成交额 191,389万</div>
+  <div class="tac"><b>做T预案：</b>已收盘：今日振幅5.8%（低85.00→高90.05），收于日内位置67%，做好明日预案即可，不盘后冲动决策</div>
+  <div class="alerts"></div>
+</div>
+<div class="card alert">
+  <div class="chead">
+    <span class="nm">春光集团 <small>301531</small></span>
+    <span class="px" style="color:#d63031">41.25</span>
+    <span class="chg" style="color:#d63031">+3.83%</span>
+    <span class='cls'>已收盘</span>
+  </div>
+  <div class="grid">
+    <div><label>持仓盈亏</label><b style="color:#00b894">-227.13万 (-50.03%)</b></div>
+    <div><label>当日盈亏</label><b style="color:#d63031">+8.36万</b></div>
+    <div><label>成本线</label><b>82.547（现价距成本 -50.0%）</b></div>
+    <div><label>今日高/低</label><b>42.29 / 39.00（涨跌停 ±20%）</b></div>
+    <div><label>当日均价</label><b>41.15</b></div>
+    <div><label>量比/换手</label><b>- / 5.32%</b></div>
+  </div>
+  <div class="range"><div class="rangefill" style="width:68%"></div><div class="rangelabel">日内位置 68%（低39.00 → 高42.29）</div></div>
+  <div class="fund">2026-10-20 主力净额：<b style="color:#d63031">+382.45万</b> ｜ 成交额 10,269万</div>
+  <div class="tac"><b>做T预案：</b>已收盘：今日振幅8.3%（低39.00→高42.29），收于日内位置68%，做好明日预案即可，不盘后冲动决策</div>
+  <div class="alerts"><span class="tag">⚠ 涨跌幅3.83%≥3%</span></div>
+</div>
+<div class="card">
+  <div class="chead">
+    <span class="nm">通鼎互联 <small>002491</small></span>
+    <span class="px" style="color:#d63031">17.86</span>
+    <span class="chg" style="color:#d63031">+1.19%</span>
+    <span class='cls'>已收盘</span>
+  </div>
+  <div class="grid">
+    <div><label>持仓盈亏</label><b style="color:#00b894">-17.06万 (-15.01%)</b></div>
+    <div><label>当日盈亏</label><b style="color:#d63031">+1.14万</b></div>
+    <div><label>成本线</label><b>21.014（现价距成本 -15.0%）</b></div>
+    <div><label>今日高/低</label><b>18.28 / 17.38（涨跌停 ±10%）</b></div>
+    <div><label>当日均价</label><b>17.91</b></div>
+    <div><label>量比/换手</label><b>- / 10.36%</b></div>
+  </div>
+  <div class="range"><div class="rangefill" style="width:53%"></div><div class="rangelabel">日内位置 53%（低17.38 → 高18.28）</div></div>
+  <div class="fund">2026-10-20 主力净额：<b style="color:#d63031">+2,957.97万</b> ｜ 成交额 218,346万</div>
+  <div class="tac"><b>做T预案：</b>已收盘：今日振幅5.1%（低17.38→高18.28），收于日内位置53%，做好明日预案即可，不盘后冲动决策</div>
+  <div class="alerts"></div>
+</div>
+<div class="ft">
+ 数据来源：腾讯实时行情（分钟级快照）；主力净额为同花顺口径（超大单+大单），取自资金流账本最近交易日。<br>
+  做T预案为条件式参考（触发条件+依据均已列出），非买卖指令；执行与否由你决定。本页每60秒自动刷新。
+</div>
+</body>
+</html>

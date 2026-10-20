@@ -69,6 +69,8 @@ def refresh_dashboard():
     try:
         import render_dashboard
         render_dashboard.render()
+        import pos_watch
+        pos_watch.render()
     except Exception as e:
         slog("看板刷新失败: %r" % e)
 

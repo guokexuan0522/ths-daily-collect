@@ -13,7 +13,7 @@ from datetime import datetime
 sys.path.insert(0, "/workspace/ths_daily")
 import ths_common as C
 
-OUT = C.DIR / "dashboard.html"
+OUT = C.DIR / "flows.html"
 
 
 def wan(v):
@@ -78,7 +78,7 @@ def render():
 </style>
 </head>
 <body><div class="wrap">
-<h1>同花顺口径 · 资金流看板</h1>
+<h1>同花顺口径 · 资金流看板 <a href="index.html" style="font-size:13px;font-weight:400">→ 持仓作战页</a></h1>
 <div class="meta">生成时间：__GEN__ ｜ 数据范围：__RNG__ ｜ 本页每5分钟自动刷新 ｜ 主力净流入 = 超大单净 + 大单净（同花顺个股页口径）</div>
 """.replace("__GEN__", gen_at).replace("__RNG__", rng))
 
@@ -146,9 +146,8 @@ def render():
 </div></body></html>""")
 
     OUT.write_text("".join(parts), encoding="utf-8")
-    # 同时输出 index.html 供 GitHub Pages 作为站点首页（默认文档名）
-    idx = C.DIR / "index.html"
-    idx.write_text("".join(parts), encoding="utf-8")
+    # 资金流页固定输出 flows.html（站点首页 index.html 已由持仓作战页接管）
+    (C.DIR / "flows.html").write_text("".join(parts), encoding="utf-8")
     return OUT
 
 
