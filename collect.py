@@ -62,7 +62,7 @@ def main():
             if done:
                 C.log("[actions] 今日选股已生成，跳过")
             else:
-                selector.run(pool_limit=250)
+                selector.run(pool_limit=500)
                 import pos_watch
                 pos_watch.render()
     except Exception as e:
