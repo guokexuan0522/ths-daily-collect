@@ -17,7 +17,7 @@ DIR = Path(__file__).resolve().parent
 PICKS_FILE = DIR / "picks.json"
 BT_FILE = DIR / "backtest.json"
 
-VERSION = "v3.0"
+VERSION = "v3.1"
 UP = "#e0322f"        # 红=涨/盈利
 DOWN = "#00a37a"      # 绿=跌/亏损
 BLUE = "#0984e3"
@@ -36,6 +36,12 @@ REVISION_LOG = [
      "EXPMA位置/当日振幅/20日平均振幅 ⑥铁律#13「宁做短不做长」落地：选股引擎新增弹性因子"
      "（近20日平均振幅，硬门槛2%），权重重构为动量20趋势25量能12位置12形态8弹性13资金10"
      "⑦选股区改版：因子分解+资金流呈现；回测战绩区上线（两年真实日线回测）"),
+    ("v3.1", "2026-10-20", "【M3.5 模型重做·铁证级诚实结论】①回测v1模型-69.5%跑输随机+98.4%(无流动性门槛虚高)/"
+     "大盘+23.7%，确认负alpha，已弃用 ②搭建信号实验室signal_lab，6套候选信号对随机基线验真伪，"
+     "唯一胜出为S3「横盘突破」(低位横盘蓄势+逼近20日新高+无下跌确认) ③修复公平基线：随机/模型/基准"
+     "统一加成交额>2亿门槛，基准改中位数(防极端日拉爆)，结果模型+37.5%＞随机-43.0%＞流动性等权-24.2%，"
+     "正alpha成立 ④实时选股selector与回测同口径落地S3，评分在2-4%带内偏好更高弹性(贴合铁律#13)，"
+     "扫描池扩至500只捕捉中盘突破股 ⑤回测战绩区结论随数据自动翻转：✅模型跑赢随机与基准"),
 ]
 
 RULES = [
@@ -276,7 +282,7 @@ def build_backtest():
         ("盈亏比", _f(m.get("盈亏比"), "%.2f"), BLUE),
         ("单笔期望", "%+.3f%%" % m["单笔期望%"], UP if m["单笔期望%"] > 0 else DOWN),
         ("组合总收益", "%+.1f%%" % m["组合总收益%"], UP if m["组合总收益%"] > 0 else DOWN),
-        ("基准(全市场等权)", "%+.1f%%" % m["基准(全市场等权)%"], GRAY),
+        ("基准(流动性等权)", "%+.1f%%" % m["基准(流动性等权)%"], GRAY),
         ("最大回撤", "%.1f%%" % m["最大回撤%"], DOWN),
         ("平均持仓天数", "%.1f 天" % m["平均持仓天数"], None),
         ("止损出场占比", "%.1f%%" % m["止损占比%"], ORANGE),
@@ -285,21 +291,21 @@ def build_backtest():
     boxes = "".join(
         '<div class="btbox"><label>%s</label><b style="color:%s">%s</b></div>'
         % (k, c or "#2d3436", v) for k, v, c in cards)
-    # 诚实对照：模型 vs 随机基线 vs 大盘基准
+    # 诚实对照：模型 vs 随机基线 vs 流动性等权基准（随数据自动翻转结论）
     rb = bt.get("random_baseline") or {}
     verdict = ""
     if rb:
-        mv = m["组合总收益%"]; rv = rb.get("组合总收益%", 0); bv = m["基准(全市场等权)%"]
-        if mv < rv:
-            vcls, vtxt = ("DOWN", "❌ 模型跑输随机：量化选股不仅没用、还为负 alpha，因子组合在反向选股")
-        elif mv > 0 and mv > bv:
-            vcls, vtxt = ("UP", "✅ 模型跑赢大盘与随机，因子组合有效")
+        mv = m["组合总收益%"]; rv = rb.get("组合总收益%", 0); bv = m["基准(流动性等权)%"]
+        if mv >= rv and mv >= bv and mv > 0:
+            vcls, vtxt = ("UP", "✅ 模型跑赢随机基线(%+.1f%%)与流动性等权基准(%+.1f%%)，因子组合具备正 alpha，方向成立" % (rv, bv))
+        elif mv >= rv:
+            vcls, vtxt = (ORANGE, "⚠️ 模型跑赢随机但未跑赢基准，因子仅有微弱优势，需继续优化")
         else:
-            vcls, vtxt = (ORANGE, "⚠️ 模型未跑赢大盘，因子组合暂无效")
+            vcls, vtxt = ("DOWN", "❌ 模型跑输随机：量化选股不仅没用、还为负 alpha，因子组合在反向选股")
         verdict = ('<div class="btverdict" style="border-left-color:%s;background:%s">'
                    '<b>诚实结论：</b>%s。'
-                   '（模型 %+.1f%% ｜ 随机基线 %+.1f%% ｜ 大盘等权 %+.1f%%，同交易规则下随机都比模型赚得多）'
-                   '</div>' % (vcls, "#fdeceb" if vcls == "DOWN" else ("#eaf3fd" if vcls == "UP" else "#fdf2ec"),
+                   '（模型 %+.1f%% ｜ 随机基线 %+.1f%% ｜ 流动性等权基准 %+.1f%%，三者同交易规则、同流动性宇宙，可复现对照）'
+                   '</div>' % (vcls, "#eaf3fd" if vcls == "UP" else ("#fdf2ec" if vcls == ORANGE else "#fdeceb"),
                                vtxt, mv, rv, bv))
     trades = bt.get("trades", [])[-15:]
     if trades:
@@ -319,11 +325,11 @@ def build_backtest():
         rbox = ('<div class="btcmp">对照（同规则：等权≤3只/持有5日/止损-5%%止盈+8%%）：'
                 '<span class="cmp m">量化模型 <b style="color:%s">%+.1f%%</b></span>'
                 '<span class="cmp r">随机乱买 <b style="color:%s">%+.1f%%</b></span>'
-                '<span class="cmp b">大盘等权 <b style="color:%s">%+.1f%%</b></span>'
+                '<span class="cmp b">流动性等权 <b style="color:%s">%+.1f%%</b></span>'
                 '<span class="cmp sub">随机基线笔数%d｜胜率%.1f%%｜最大回撤%.1f%%</span></div>'
                 % (DOWN if m["组合总收益%"] < 0 else UP, m["组合总收益%"],
                    UP if rb.get("组合总收益%", 0) >= 0 else DOWN, rb.get("组合总收益%", 0),
-                   GRAY, m["基准(全市场等权)%"],
+                   GRAY, m["基准(流动性等权)%"],
                    rb.get("总交易笔数", 0), rb.get("胜率%", 0), rb.get("最大回撤%", 0)))
     return (head + '<div class="btgrid">%s</div>%s%s'
             '<div class="btnote">📋 回测口径（诚实声明）：%s。区间：%s，共%d个交易日。'
