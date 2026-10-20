@@ -77,7 +77,7 @@ def random_pick(t, need, F, V, is_st, rng):
 
 
 def simulate_v2(pick_fn, exit_rule, regime_filter, start, T):
-    STOP, TP, TRAIL, MAXHOLD = -0.05, 0.08, 0.03, 12
+    STOP, TP, HOLD, TRAIL, MAXHOLD = -0.05, 0.08, 5, 0.03, 12
     positions = []; daily_ret = []; trades = []
     rng = np.random.default_rng(20261020)
     for t in range(start, T - 1):
@@ -95,6 +95,8 @@ def simulate_v2(pick_fn, exit_rule, regime_filter, start, T):
                 exit_reason = "止盈"
             elif exit_rule.get("struct") and C[p["i"], t] < e50[p["i"], t]:
                 exit_reason = "结构失效"
+            elif p["days"] >= HOLD:
+                exit_reason = "到期"            # 5日硬到期兜底（铁律#13 宁做短不做长）
             elif p["days"] >= MAXHOLD:
                 exit_reason = "到期"
             if exit_reason:
