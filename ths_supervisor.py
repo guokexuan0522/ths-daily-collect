@@ -98,6 +98,16 @@ def git_sync():
         pl = _git(["pull", "--no-edit", "--no-rebase"])
         if pl.returncode != 0:
             slog("git pull 失败: %s" % (pl.stderr or "").strip()[:200])
+        else:
+            # pull 合并后立即跨端去重，防止双通道重复行落地
+            try:
+                n = C.dedupe_ledger()
+                if n:
+                    slog("pull 后去重 %d 行，重新提交" % n)
+                    _git(["add", "-A"])
+                    _git(["commit", "-m", "fix: dedupe ledger %s" % _now()])
+            except Exception as e:
+                slog("pull 后去重异常: %r" % e)
         for _ in range(2):
             ps = _git(["push"])
             if ps.returncode == 0:
