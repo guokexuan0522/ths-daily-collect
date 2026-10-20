@@ -197,12 +197,65 @@ def collect_decision():
     return True, "缺少 %s 的数据（%d只）" % (last, len(missing)), last
 
 
+def dedupe_ledger():
+    """清理账本重复行：本地守护进程与云端Actions双通道同时采集、git合并后
+    可能产生完全相同的重复行。按"值指纹"(code,trade_date,caliber,四路净额)保留首行；
+    带note的"同日异值待复核"行不受影响。返回删除行数。"""
+    if not LEDGER.exists():
+        return 0
+    seen, kept, removed = set(), [], 0
+    for line in LEDGER.read_text(encoding="utf-8").splitlines():
+        s = line.strip()
+        if not s:
+            continue
+        try:
+            r = json.loads(s)
+            key = (r.get("code"), r.get("trade_date"), r.get("caliber", "ths"),
+                   r.get("mass_net"), r.get("big_net"),
+                   r.get("medium_net"), r.get("small_net"))
+        except Exception:
+            kept.append(s)
+            continue
+        if key in seen:
+            removed += 1
+            continue
+        seen.add(key)
+        kept.append(s)
+    if removed:
+        LEDGER.write_text("\n".join(kept) + "\n", encoding="utf-8")
+        log("账本去重: 删除 %d 行跨端重复记录" % removed)
+    return removed
+
+
+def _intraday_block():
+    """工作日 15:45 前禁止采集的硬守卫（数据完整性优先，铁律#7）。
+
+    实测教训（2026-10-20）：同花顺资金流接口在交易日上午即重置当日计数器
+    （09:09 实测超大单/大单已清零、中单残留昨日值），此时接口返回的是
+    "当日实时快照"而非"最近已收盘交易日的最终数据"。若 K 线界定的
+    trade_date 还是昨天，混记即产生脏数据。
+    工作日 15:45 之后采集：K 线必有当日 bar（或 fallback 推断=今天），
+    与快照天然一致。周末/节假日不拦：接口保留最近交易日最终数据。
+    代价：交易日上午无法补采昨日数据（补采改到周末或当日15:45后），可接受。
+    """
+    now = now_cst()
+    if now.weekday() >= 5:
+        return False
+    mins = now.hour * 60 + now.minute
+    return mins < 15 * 60 + 45
+
+
 def collect_once():
-    """完整采集一次（幂等：按 code+trade_date+数据指纹去重）。
+    """完整采集一次（幂等：先跨端去重，再按 code+trade_date+数据指纹去重）。
 
     返回摘要 dict: {ok, trade_date, new, dup, fail, summary[]}
     """
     DIR.mkdir(parents=True, exist_ok=True)
+    if _intraday_block():
+        log("盘中守卫: 工作日09:15-15:45禁止采集（资金流快照为当日实时值，禁止与已收盘交易日混记）")
+        return {"ok": False, "blocked": True, "trade_date": None,
+                "new": 0, "dup": 0, "fail": 0, "summary": []}
+    dedupe_ledger()
     existing = load_ledger()
 
     # 1) K线确定最近已收盘交易日 + 当日收盘/量额
