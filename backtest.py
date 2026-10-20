@@ -68,13 +68,14 @@ def precompute(z):
     F["vol_ratio"] = V / np.maximum(roll_mean(V, 5), 1)
     F["pos60"] = C / np.maximum(roll_max(H, 60), 1e-9)
     F["amp20"] = roll_mean((H - L) / np.maximum(C, 1e-9), 20)
+    F["C"] = C                            # 收盘价（score_slice 复用）
     F["amt"] = V * C                      # 成交额(元)
     # 123法则下跌确认计数（向量化近似）
     prev_lo = roll_max(-L, 10) * -1       # 近10日最低
     hi10 = roll_max(H, 10)
     hi_prev10 = np.zeros_like(C)
-    for t in range(10, T):
-        hi_prev10[:, t] = H[:, max(0, t - 20):t - 10].max(axis=1)
+    for t in range(20, T):  # t<20 时前段不足20日，置0（不影响后续因子，START_IDX=60起用）
+        hi_prev10[:, t] = H[:, t - 20:t - 10].max(axis=1)
     F["bear"] = ((C < prev_lo).astype(np.int8)
                  + (hi10 < hi_prev10).astype(np.int8)
                  + ((C < F["ma20"]) & (F["ma5"] < F["ma10"])).astype(np.int8))
@@ -109,24 +110,12 @@ def score_slice(F, t, is_st):
     return total, ok
 
 
-def run():
-    t0 = time.time()
-    z, names = load()
-    codes = list(z["codes"])
-    dates = list(z["dates"])
-    C = z["C"]; H = z["H"]; L = z["L"]; V = z["V"]
-    N, T = C.shape
-    is_st = np.array([("ST" in names.get(c, "").upper()) or ("退" in names.get(c, ""))
-                      for c in codes])
-    F = precompute(z)
-    print("因子预计算完成: %d只 x %d天, %.0fs" % (N, T, time.time() - t0))
-
-    trades = []
-    positions = []          # {code_idx, buy_price, days}
-    daily_ret = []
-    start = START_IDX
+def simulate(pick_fn, F, C, V, is_st, codes, names, dates, start, T):
+    """事件驱动模拟：统一交易规则（等权≤3只/持有5日/止损-5%止盈+8%）。
+    pick_fn(t, need) -> 当日 t 希望建仓的标的索引列表（≤need）。返回 (daily_ret, trades)。"""
+    positions = []; daily_ret = []; trades = []
+    rng = np.random.default_rng(20261020)
     for t in range(start, T - 1):
-        # 1) 平仓检查（用 t 日收盘）
         still = []
         for p in positions:
             p["days"] += 1
@@ -150,42 +139,46 @@ def run():
             else:
                 still.append(p)
         positions = still
-        # 2) 当日组合收益（收盘到收盘）
         if positions:
             r = float(np.mean([C[p["i"], t] / C[p["i"], t - 1] - 1 for p in positions]))
         else:
             r = 0.0
         daily_ret.append(r)
-        # 3) t+1 建仓信号（用 t 日因子）
         if t + 1 >= T - 1:
             break
-        if len(positions) >= TOP_PICKS:
-            continue
-        scores, ok = score_slice(F, t + 1, is_st)
-        # 第一层：成交额前 TOP_POOL
-        amt = F["amt"][:, t]
-        pool_mask = ok & (np.argsort(np.argsort(-amt)) < TOP_POOL)
-        scores = np.where(pool_mask, scores, -1)
-        top = np.argsort(-scores)[:TOP_PICKS - len(positions)]
-        for i in top:
-            if scores[i] <= 0:
-                continue
-            if any(p["i"] == i for p in positions):
-                continue
-            positions.append({"i": int(i), "buy": float(C[i, t + 1]),
-                              "buy_t": t + 1, "days": 0})
-    # 指标
-    rets = np.array([x["ret_pct"] for x in trades]) if trades else np.array([0])
+        need = TOP_PICKS - len(positions)
+        if need > 0:
+            for i in pick_fn(t, need, F, V, is_st, rng):
+                positions.append({"i": int(i), "buy": float(C[i, t + 1]),
+                                  "buy_t": t + 1, "days": 0})
+    return daily_ret, trades
+
+
+def model_pick(t, need, F, V, is_st, rng):
+    scores, ok = score_slice(F, t + 1, is_st)
+    amt = F["amt"][:, t]
+    pool_mask = ok & (np.argsort(np.argsort(-amt)) < TOP_POOL)
+    scores = np.where(pool_mask, scores, -1)
+    top = np.argsort(-scores)[:need]
+    return [i for i in top if scores[i] > 0]
+
+
+def random_pick(t, need, F, V, is_st, rng):
+    ok = (~is_st) & (F["amp20"][:, t] >= 0.02) & (F["C"][:, t] > 1.0) & (V[:, t] > 0)
+    elig = np.where(ok)[0]
+    if len(elig) == 0:
+        return []
+    return list(rng.choice(elig, size=min(need, len(elig)), replace=False))
+
+
+def metrics_from(trades, daily_ret, label):
+    rets = np.array([x["ret_pct"] for x in trades]) if trades else np.array([0.0])
     wins = rets[rets > 0]; losses = rets[rets <= 0]
     equity = np.cumprod(1 + np.array(daily_ret))
     peak = np.maximum.accumulate(equity)
     max_dd = float((equity / peak - 1).min() * 100) if len(equity) else 0
-    # 基准：全市场等权日收益
-    bench = np.nanmean(C[:, start + 1:T] / np.maximum(C[:, start:T - 1], 1e-9) - 1, axis=0)
-    bench_eq = np.cumprod(1 + bench)
-    metrics = {
-        "区间": "%s ~ %s" % (dates[start], dates[T - 1]),
-        "交易日数": T - 1 - start,
+    return {
+        "标签": label,
         "总交易笔数": len(trades),
         "胜率%": round(float(len(wins) / len(rets) * 100), 1) if len(rets) else 0,
         "平均盈利%": round(float(wins.mean()), 2) if len(wins) else 0,
@@ -193,20 +186,66 @@ def run():
         "盈亏比": round(float(wins.mean() / abs(losses.mean())), 2) if len(wins) and len(losses) else None,
         "单笔期望%": round(float(rets.mean()), 3),
         "组合总收益%": round(float((equity[-1] - 1) * 100), 1) if len(equity) else 0,
-        "基准(全市场等权)%": round(float((bench_eq[-1] - 1) * 100), 1),
         "最大回撤%": round(max_dd, 1),
         "平均持仓天数": round(float(np.mean([x["days"] for x in trades])), 1) if trades else 0,
-        "止损占比%": round(float(sum(1 for x in trades if x["reason"] == "止损") / max(len(trades), 1) * 100), 1),
-        "止盈占比%": round(float(sum(1 for x in trades if x["reason"] == "止盈") / max(len(trades), 1) * 100), 1),
-        "耗时秒": round(time.time() - t0, 1),
     }
-    out = {"metrics": metrics, "trades": trades,
-           "equity_curve": [round(float(x), 4) for x in equity[::5]],  # 抽样存曲线
-           "bench_curve": [round(float(x), 4) for x in bench_eq[::5]],
-           "assumptions": "T-1收盘信号,T日收盘成交;等权≤3只;持有5日;止损-5%/止盈+8%;无资金流历史故回测版无资金因子"}
-    (DIR / "backtest.json").write_text(json.dumps(out, ensure_ascii=False), encoding="utf-8")
+
+
+def run():
+    t0 = time.time()
+    z, names = load()
+    codes = list(z["codes"])
+    dates = list(z["dates"])
+    C = z["C"]; H = z["H"]; L = z["L"]; V = z["V"]
+    N, T = C.shape
+    is_st = np.array([("ST" in names.get(c, "").upper()) or ("退" in names.get(c, ""))
+                      for c in codes])
+    F = precompute(z)
+    print("因子预计算完成: %d只 x %d天, %.0fs" % (N, T, time.time() - t0))
+
+    start = START_IDX
+    # 模型 v1
+    m_ret, m_tr = simulate(model_pick, F, C, V, is_st, codes, names, dates, start, T)
+    # 随机基线（同规则，固定种子，可复现）
+    r_ret, r_tr = simulate(random_pick, F, C, V, is_st, codes, names, dates, start, T)
+    # 基准：全市场等权买入持有
+    bench = np.nanmean(C[:, start + 1:T] / np.maximum(C[:, start:T - 1], 1e-9) - 1, axis=0)
+    bench_eq = np.cumprod(1 + bench)
+    m_eq = np.cumprod(1 + np.array(m_ret))
+    r_eq = np.cumprod(1 + np.array(r_ret))
+
+    metrics = metrics_from(m_tr, m_ret, "量化模型v1")
+    metrics["区间"] = "%s ~ %s" % (dates[start], dates[T - 1])
+    metrics["交易日数"] = T - 1 - start
+    metrics["基准(全市场等权)%"] = round(float((bench_eq[-1] - 1) * 100), 1)
+    metrics["止损占比%"] = round(float(sum(1 for x in m_tr if x["reason"] == "止损") / max(len(m_tr), 1) * 100), 1)
+    metrics["止盈占比%"] = round(float(sum(1 for x in m_tr if x["reason"] == "止盈") / max(len(m_tr), 1) * 100), 1)
+    metrics["耗时秒"] = round(time.time() - t0, 1)
+    random_metrics = metrics_from(r_tr, r_ret, "随机基线(同规则)")
+
+    out = {
+        "metrics": metrics,
+        "random_baseline": random_metrics,
+        "trades": m_tr,
+        "equity_curve": [round(float(x), 4) for x in m_eq[::5]],
+        "random_curve": [round(float(x), 4) for x in r_eq[::5]],
+        "bench_curve": [round(float(x), 4) for x in bench_eq[::5]],
+        "assumptions": "T-1收盘信号,T日收盘成交;等权≤3只;持有5日;止损-5%/止盈+8%;无资金流历史故回测版无资金因子;随机基线同规则固定种子可复现",
+    }
+
+    def _to_native(o):
+        if isinstance(o, (np.floating,)):
+            return float(o)
+        if isinstance(o, (np.integer,)):
+            return int(o)
+        if isinstance(o, np.ndarray):
+            return o.tolist()
+        raise TypeError(str(type(o)))
+
+    (DIR / "backtest.json").write_text(json.dumps(out, ensure_ascii=False, default=_to_native), encoding="utf-8")
     print(json.dumps(metrics, ensure_ascii=False, indent=2))
-    print("已写入 backtest.json，交易明细 %d 笔" % len(trades))
+    print("\n随机基线对照:", json.dumps(random_metrics, ensure_ascii=False))
+    print("已写入 backtest.json，模型交易明细 %d 笔 / 随机 %d 笔" % (len(m_tr), len(r_tr)))
     return out
 
 
