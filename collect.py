@@ -34,7 +34,7 @@ def main():
                    r.get("trade_date"), r.get("new"), r.get("dup"),
                    r.get("fail")))
 
-    # 采集成功则渲染看板（健康检查；看板本体不入库，由本地守护进程生成）
+    # 渲染看板 + 持仓页（含选股候选池板块）
     try:
         import render_dashboard
         render_dashboard.render()
@@ -42,6 +42,31 @@ def main():
         pos_watch.render()
     except Exception as e:
         C.log("[actions] render failed: %r" % e)
+
+    # 每日选股（收盘后15:45起运行一次，当天不重复；盘中守卫同源）
+    try:
+        import selector
+        if C._intraday_block():
+            C.log("[actions] 盘中守卫: 跳过每日选股（15:45后运行）")
+        else:
+            import json as _json
+            pj = C.DIR / "picks.json"
+            today = C.now_cst().strftime("%F")
+            done = False
+            if pj.exists():
+                try:
+                    done = _json.loads(pj.read_text(encoding="utf-8")).get(
+                        "generated_at", "")[:10] == today
+                except Exception:
+                    pass
+            if done:
+                C.log("[actions] 今日选股已生成，跳过")
+            else:
+                selector.run(pool_limit=250)
+                import pos_watch
+                pos_watch.render()
+    except Exception as e:
+        C.log("[actions] selector failed: %r" % e)
 
     if not r.get("ok"):
         # 采集失败不阻断 workflow，退出码 0（cron 下次会重试）
@@ -59,7 +84,7 @@ def main():
 
     sh(["git", "config", "user.name", "ths-bot"])
     sh(["git", "config", "user.email", "ths-bot@users.noreply.github.com"])
-    sh(["git", "add", "flows.jsonl", "runs.log", "dashboard.html", "index.html", "position.html", "flows.html"])
+    sh(["git", "add", "flows.jsonl", "runs.log", "dashboard.html", "index.html", "position.html", "flows.html", "picks.json"])
     d = sh(["git", "diff", "--cached", "--quiet"])
     if d.returncode != 0:
         c = sh(["git", "commit", "-m", "collect %s" % r.get("trade_date")])

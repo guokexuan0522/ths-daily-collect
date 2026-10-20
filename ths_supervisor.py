@@ -65,6 +65,29 @@ def write_status(**kw):
         slog("状态写入失败: %r" % e)
 
 
+def maybe_daily_select():
+    """每日收盘后跑一次选股（盘中守卫同源；当天已生成则跳过）。"""
+    try:
+        import selector
+        import ths_common as C
+        if C._intraday_block():
+            return
+        pj = C.DIR / "picks.json"
+        today = C.now_cst().strftime("%F")
+        if pj.exists():
+            try:
+                if json.loads(pj.read_text(encoding="utf-8")).get(
+                        "generated_at", "")[:10] == today:
+                    return
+            except Exception:
+                pass
+        slog("触发每日选股（全A海扫）...")
+        selector.run(pool_limit=250)
+        refresh_dashboard()
+    except Exception as e:
+        slog("每日选股异常: %r" % e)
+
+
 def refresh_dashboard():
     try:
         import render_dashboard
@@ -158,6 +181,7 @@ def main():
                              consecutive_failures=fails)
                 if ok:
                     refresh_dashboard()
+                    maybe_daily_select()
             else:
                 write_status(last_check=_now(), last_reason=reason)
         except Exception as e:
