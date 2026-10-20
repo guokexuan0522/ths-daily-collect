@@ -285,6 +285,22 @@ def build_backtest():
     boxes = "".join(
         '<div class="btbox"><label>%s</label><b style="color:%s">%s</b></div>'
         % (k, c or "#2d3436", v) for k, v, c in cards)
+    # 诚实对照：模型 vs 随机基线 vs 大盘基准
+    rb = bt.get("random_baseline") or {}
+    verdict = ""
+    if rb:
+        mv = m["组合总收益%"]; rv = rb.get("组合总收益%", 0); bv = m["基准(全市场等权)%"]
+        if mv < rv:
+            vcls, vtxt = ("DOWN", "❌ 模型跑输随机：量化选股不仅没用、还为负 alpha，因子组合在反向选股")
+        elif mv > 0 and mv > bv:
+            vcls, vtxt = ("UP", "✅ 模型跑赢大盘与随机，因子组合有效")
+        else:
+            vcls, vtxt = (ORANGE, "⚠️ 模型未跑赢大盘，因子组合暂无效")
+        verdict = ('<div class="btverdict" style="border-left-color:%s;background:%s">'
+                   '<b>诚实结论：</b>%s。'
+                   '（模型 %+.1f%% ｜ 随机基线 %+.1f%% ｜ 大盘等权 %+.1f%%，同交易规则下随机都比模型赚得多）'
+                   '</div>' % (vcls, "#fdeceb" if vcls == "DOWN" else ("#eaf3fd" if vcls == "UP" else "#fdf2ec"),
+                               vtxt, mv, rv, bv))
     trades = bt.get("trades", [])[-15:]
     if trades:
         rows = "".join(
@@ -298,11 +314,23 @@ def build_backtest():
                  "<tbody>%s</tbody></table>" % rows)
     else:
         table = ""
-    return (head + '<div class="btgrid">%s</div>'
+    rbox = ""
+    if rb:
+        rbox = ('<div class="btcmp">对照（同规则：等权≤3只/持有5日/止损-5%%止盈+8%%）：'
+                '<span class="cmp m">量化模型 <b style="color:%s">%+.1f%%</b></span>'
+                '<span class="cmp r">随机乱买 <b style="color:%s">%+.1f%%</b></span>'
+                '<span class="cmp b">大盘等权 <b style="color:%s">%+.1f%%</b></span>'
+                '<span class="cmp sub">随机基线笔数%d｜胜率%.1f%%｜最大回撤%.1f%%</span></div>'
+                % (DOWN if m["组合总收益%"] < 0 else UP, m["组合总收益%"],
+                   UP if rb.get("组合总收益%", 0) >= 0 else DOWN, rb.get("组合总收益%", 0),
+                   GRAY, m["基准(全市场等权)%"],
+                   rb.get("总交易笔数", 0), rb.get("胜率%", 0), rb.get("最大回撤%", 0)))
+    return (head + '<div class="btgrid">%s</div>%s%s'
             '<div class="btnote">📋 回测口径（诚实声明）：%s。区间：%s，共%d个交易日。'
-            '回测版因子不含资金流（无历史资金流数据，实时版才有）；未计滑点/停牌/涨跌停无法成交。'
+            '回测版因子不含资金流（无历史资金流数据，实时版才有）；未计滑点/停牌/涨跌停无法成交；止损-5%%/止盈+8%%。'
+            '随机基线采用同套交易规则、固定随机种子，可复现，用于检验因子是否真有 alpha。'
             '历史回测不代表未来收益，用于验证模型逻辑是否成立。</div>%s</div>'
-            % (boxes, bt.get("assumptions", ""), m["区间"], m["交易日数"], table))
+            % (boxes, rbox, verdict, bt.get("assumptions", ""), m["区间"], m["交易日数"], table))
 
 
 def render(rows=None):
@@ -449,6 +477,13 @@ a{color:#74b9ff;text-decoration:none}
 .btt th{background:#f1f2f6;padding:5px 6px;text-align:left;font-size:11px;color:#636e72;white-space:nowrap}
 .btt td{padding:5px 6px;border-bottom:1px solid #eef0f4;white-space:nowrap}
 .btt tr:hover{background:#f7f8fa}
+/* 诚实对照条 + 结论 */
+.btcmp{display:flex;flex-wrap:wrap;gap:14px;align-items:baseline;background:#f7f8fa;border-radius:10px;padding:9px 12px;margin-bottom:8px;font-size:13px}
+.btcmp .cmp{font-weight:600}
+.btcmp .cmp b{font-size:17px;font-weight:800;margin:0 2px}
+.btcmp .cmp.sub{font-size:11px;color:#636e72;font-weight:400}
+.btverdict{border-left:5px solid #e0322f;background:#fdeceb;border-radius:0 10px 10px 0;padding:10px 14px;margin-bottom:10px;font-size:13.5px;line-height:1.7}
+.btverdict b{display:block;margin-bottom:2px;color:#c0392b}
 /* ===== 页脚 ===== */
 .ft{background:#fff;border-radius:12px;padding:14px;margin:14px 0;font-size:12px;color:#636e72;line-height:1.9;box-shadow:0 1px 3px rgba(0,0,0,.06)}
 .ft h3{font-size:13px;color:#2d3436;margin-bottom:6px}
