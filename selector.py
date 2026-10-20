@@ -80,31 +80,16 @@ def fetch_kline(symbol, datalen=62):
 
 
 def fetch_fund_ths(code, market):
-    """同花顺资金流 -> (mass, big) 或 None"""
-    mid = 33 if market == "sz" else 22 if code.startswith("60") else 17
-    if code.startswith("30"):
-        mid = 33
-    elif code.startswith("60"):
-        mid = 17
-    elif code.startswith("00"):
-        mid = 33
-    url = ("https://stockpage.10jqka.com.cn/stock_page/api/v1/stockpage/"
-           "funds/?code=%s&marketId=%d" % (code, mid))
-    try:
-        d = json.loads(_get(url, headers=THS_UA))
-        items = d.get("data") or []
-        if isinstance(items, dict):
-            items = [items]
-        for it in items:
-            if it.get("code") == code:
-                return (float(it.get("mass_capital_net_inflow") or 0),
-                        float(it.get("big_capital_net_inflow") or 0))
-        if items:
-            it = items[0]
-            return (float(it.get("mass_capital_net_inflow") or 0),
-                    float(it.get("big_capital_net_inflow") or 0))
-    except Exception:
-        return None
+    """同花顺资金流（复用 ths_common 已验证路径 fundsData.largeOrderFlow）。
+    marketId 映射经实测：深市33；沪市先试17、备选22。"""
+    import ths_common as C
+    for mid in (("33",) if market == "sz" else ("17", "22")):
+        f = C.fetch_funds(code, mid)
+        if f:
+            m = f.get("mass_capital_net_inflow") or 0
+            b = f.get("big_capital_net_inflow") or 0
+            if m or b:          # 零值视为无效，继续尝试下一个 marketId
+                return (m, b)
     return None
 
 
@@ -147,13 +132,16 @@ def calc_factors(kl):
     if c < ma20 and ma5 < ma10:
         bear_confirm += 1          # 均线走坏
     new_high20 = c >= max(highs[-20:]) * 0.995
+    # 弹性（铁律#13 宁做短不做长）：近20日平均振幅 (最高-最低)/收盘
+    amp20 = sum((highs[i] - lows[i]) / max(closes[i], 1e-9)
+                for i in range(len(closes) - 20, len(closes))) / 20 * 100
     return {
         "close": c, "ma5": ma5, "ma10": ma10, "ma20": ma20,
         "expma12": e12, "expma50": e50,
         "hi60": hi60, "lo60": lo60, "dd60": dd60,
         "vol_ratio": vol_ratio, "chg5": chg5, "chg10": chg10, "chg20": chg20,
         "bear_confirm": bear_confirm, "new_high20": new_high20,
-        "pos60": c / hi60,
+        "pos60": c / hi60, "amp20": amp20,
     }
 
 

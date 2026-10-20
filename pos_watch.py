@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
-"""持仓作战平台 v2.0 渲染器：实时盯盘 + 三模块策略指南 + 选股候选池。
+"""持仓作战平台 v3.0 数据层：实时盯盘采集 + 四模块策略文本生成。
 
-红涨绿跌（A股看盘习惯）。输出 position.html(本地) 与 index.html(Pages首页)。
-三模块策略指南（命名规范化，v2.0 起）：
-  「分时做T指导」— 基于当日分时数据（均价/日内位置/量比）
-  「日线波段指导」— 基于日线数据（EXPMA/均线/支撑压力/123法则）
+红涨绿跌（A股看盘习惯）。v3.0 起版面渲染委托 render_v3.render()。
+四个作战模块（命名规范化，v2.0 起，v3.0 补盘后指令）：
+  「分时做T指导」— 基于当日分时数据（均价/日内位置/量比），盘中实时调整
+  「日线波段指导」— 基于日线数据（EXPMA/均线/支撑压力/123法则），盘中实时调整
+  「盘后作战指令」— 明日/未来几日走留判断（浮盈浮亏阈值+趋势确认，附具体价位）
   「超短交易纪律」— 固定纪律条款，个性化数字
+v3.0 修复：日线因子高低点取数错误（原 highs 误取 low、lows 误取 close，
+  导致支撑/压力/60日高低/123法则全部失真）。
 铁律#3：页面每个数字都可追溯到来源；无依据不出结论。
 """
 import json
@@ -119,8 +122,9 @@ def build_rows():
             continue
         kl = fetch_kline(p["code"], p["market"])
         closes = [r[3] for r in kl] if kl else []
-        highs = [r[2] for r in kl] if kl else []
-        lows = [r[3] for r in kl] if kl else []
+        highs = [r[1] for r in kl] if kl else []      # r=(open,high,low,close,volume)
+        lows = [r[2] for r in kl] if kl else []
+        opens = [r[0] for r in kl] if kl else []
         d = {}
         if len(closes) >= 60:
             d["expma12"] = ema(closes[-30:], 12)
@@ -213,6 +217,30 @@ def build_rows():
                 % (round(q["price"] * 0.95, 2), round(q["price"] * 1.08, 2),
                    d.get("expma12", q["price"])))
 
+        # ===== 模块四：盘后作战指令（明日/未来几日：走/留判断）=====
+        if d:
+            stop_px = round(p["cost"] * 0.95, 2)   # 持仓止损按成本基准（铁律#5）
+            if pl_pct <= -8:
+                oh = ("【减仓】浮亏%.1f%%已逼近止损线（%.2f）：明日反弹至EXPMA12（%.2f）附近减仓，"
+                      "跌破%.2f无条件清仓，不扛。" % (pl_pct, stop_px, d["expma12"], stop_px))
+            elif pl_pct >= 8:
+                oh = ("【走/减】浮盈%.1f%%已达第一目标：明日冲高清半仓锁定，剩余半仓看EXPMA12（%.2f），"
+                      "跌破全清。" % (pl_pct, d["expma12"]))
+            elif q["price"] > d["expma12"] > d["expma50"] and d["bear_confirm"] == 0:
+                oh = ("【留/持】EXPMA多头排列且123法则无下跌确认：继续持有；回踩EXPMA12（%.2f）"
+                      "不破可低吸加仓，跌破EXPMA50（%.2f）再离场。" % (d["expma12"], d["expma50"]))
+            elif d["bear_confirm"] >= 2:
+                oh = ("【走】123法则出现%d项下跌确认、趋势转弱：明日反弹至EXPMA12（%.2f）附近离场，"
+                      "不恋战，持币等下一个候选池信号。" % (d["bear_confirm"], d["expma12"]))
+            elif q["price"] < d["expma50"]:
+                oh = ("【观察】价格位于EXPMA50（%.2f）下方、波段弱势：明日反弹至EXPMA12（%.2f）先减后看，"
+                      "重新站上EXPMA50再议持有。" % (d["expma50"], d["expma12"]))
+            else:
+                oh = ("【观察】趋势中性：守EXPMA12（%.2f），跌破减仓；放量突破近10日高点%.2f可加仓。"
+                      % (d["expma12"], d["res10"]))
+        else:
+            oh = "日线数据暂缺，盘后作战指令待数据恢复后自动生成。"
+
         rows.append({
             "code": p["code"], "name": p["name"], "cost": p["cost"],
             "shares": p["shares"], "price": q["price"],
@@ -226,201 +254,31 @@ def build_rows():
             "fund_date": fu["trade_date"] if fu else None,
             "fund_main": fu["main_net"] if fu else None,
             "alerts": alerts, "tac_t": tac_t, "wave": wave, "disc": disc,
+            "order": oh,
+            # ===== v3.0 新增：日线因子与派生指标（关键价位色块条/回测区复用）=====
+            "expma12": d.get("expma12"), "expma50": d.get("expma50"),
+            "ma5": d.get("ma5"), "ma10": d.get("ma10"), "ma20": d.get("ma20"),
+            "sup10": d.get("sup10"), "res10": d.get("res10"),
+            "hi60": d.get("hi60"), "lo60": d.get("lo60"),
+            "bear_confirm": d.get("bear_confirm", 0),
+            "amp_today": ((q["high"] - q["low"]) / q["pre_close"] * 100) if q["pre_close"] else 0,
+            "amp20": (sum((highs[i] - lows[i]) / max(closes[i], 1e-9)
+                          for i in range(len(closes) - 20, len(closes))) / 20 * 100)
+                     if len(closes) >= 20 else None,
+            "stop_px": round(p["cost"] * 0.95, 2),
+            "tgt_px": round(p["cost"] * 1.08, 2),
         })
         time.sleep(0.3)
     return rows
 
 
 def render(rows=None):
+    """v3.0 起：版面设计委托 render_v3.render()（分类排版+色块+回测战绩区）。
+    pos_watch 只负责数据采集与策略文本生成，版面由 render_v3 统一维护。"""
     if rows is None:
         rows = build_rows()
-    tot_mv = sum(r["mv"] for r in rows)
-    tot_cost = sum(r["cost_mv"] for r in rows)
-    tot_pl = tot_mv - tot_cost
-    tot_pl_pct = tot_pl / tot_cost * 100 if tot_cost else 0
-    tot_day = sum(r["day_pl"] for r in rows)
-    gen = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-
-    cards = []
-    for r in rows:
-        up = r["chg_pct"] >= 0
-        plup = r["pl_pct"] >= 0
-        color = "#d63031" if up else "#00b894"
-        plcolor = "#d63031" if plup else "#00b894"
-        fund_color = "#d63031" if (r["fund_main"] or 0) >= 0 else "#00b894"
-        alert_html = "".join('<span class="tag">⚠ %s</span>' % a for a in r["alerts"])
-        posbar = min(max(r["pos_in_range"], 0), 100)
-        cards.append("""
-<div class="card%s">
-  <div class="chead">
-    <span class="nm">%s <small>%s</small></span>
-    <span class="px" style="color:%s">%.2f</span>
-    <span class="chg" style="color:%s">%+.2f%%</span>
-    <span class="cls">%s</span>
-  </div>
-  <div class="grid">
-    <div><label>持仓数量</label><b>%s 股</b></div>
-    <div><label>成本价 / 市值</label><b>%.3f ｜ %s万</b></div>
-    <div><label>持仓盈亏</label><b style="color:%s">%s (%.2f%%)</b></div>
-    <div><label>当日盈亏</label><b style="color:%s">%s</b></div>
-    <div><label>今日高/低</label><b>%.2f / %.2f（涨跌停±%.0f%%：%.2f/%.2f）</b></div>
-    <div><label>量比 / 换手</label><b>%s ｜ %.2f%%</b></div>
-  </div>
-  <div class="range"><div class="rangefill" style="width:%.0f%%"></div><div class="rangelabel">日内位置 %.0f%%（低%.2f → 高%.2f，均价%s）</div></div>
-  <div class="fund">%s 主力净额：<b style="color:%s">%s</b> ｜ 当日成交额 %s万</div>
-  <div class="alerts">%s</div>
-  <div class="mod"><b>分时做T指导</b>%s</div>
-  <div class="mod"><b>日线波段指导</b>%s</div>
-  <div class="mod disc"><b>超短交易纪律</b>%s</div>
-</div>""" % (
-            " alert" if r["alerts"] else "",
-            r["name"], r["code"], color, r["price"], color, r["chg_pct"],
-            "已收盘" if r["closed"] else "交易中",
-            "{:,}".format(r["shares"]), r["cost"], "{:,.2f}".format(r["mv"] / 1e4),
-            plcolor, fmt_wan(r["pl"]), r["pl_pct"],
-            color, fmt_wan(r["day_pl"]),
-            r["high"], r["low"], r["limit_pct"], r["up_limit"], r["dn_limit"],
-            ("%.2f" % r["vol_ratio"]) if r["vol_ratio"] else "盘后不显示", r["turnover"],
-            posbar, r["pos_in_range"], r["low"], r["high"],
-            ("%.2f" % r["avg"]) if r["avg"] else "-",
-            r["fund_date"] or "-", fund_color,
-            fmt_wan(r["fund_main"]) if r["fund_main"] is not None else "暂无",
-            "{:,.0f}".format(r["amt_wan"]),
-            alert_html or '<span class="tag ok">无异动</span>',
-            r["tac_t"], r["wave"], r["disc"]))
-
-    # ===== 选股候选池板块 =====
-    pick_html = ('<div class="sec"><h2>每日选股 · 候选池 <small>'
-                 '（M2引擎 · 全A海扫 · 数据源：新浪全市场+日K+同花顺资金流）</small></h2>')
-    picks = None
-    if PICKS_FILE.exists():
-        try:
-            picks = json.loads(PICKS_FILE.read_text(encoding="utf-8"))
-        except Exception:
-            picks = None
-    if not picks or not picks.get("picks"):
-        pick_html += '<div class="mod">今日选股结果尚未生成（盘后15:45后自动运行，或手动触发）</div>'
-    else:
-        pick_html += ('<div class="pmeta">生成于 %s ｜ 扫描 %d 只 → 入池 %d → 打分 %d ｜ '
-                      '耗时 %.0fs ｜ 候选 %d 只（★为主推）</div>'
-                      % (picks["generated_at"], picks["market_scanned"],
-                         picks["layer1_pool"], picks["layer2_scored"],
-                         picks["elapsed_sec"], len(picks["picks"])))
-        for p in picks["picks"]:
-            tag = "★主推" if p["primary"] else "备选"
-            reasons = "".join("<li>%s</li>" % x for x in p["reasons"])
-            pick_html += """
-<div class="pick">
-  <div class="phead"><span class="pnm">#%d %s <small>%s</small></span>
-    <span class="pscore">%s 得分 %.1f</span>
-    <span class="pprice">现价 %.2f（%+.2f%%）成交额%.1f亿</span></div>
-  <ul class="why">%s</ul>
-  <div class="prow"><b>买入条件：</b>%s</div>
-  <div class="prow"><b>止损位：</b>%s</div>
-  <div class="prow"><b>目标位：</b>%s</div>
-  <div class="prow"><b>失效条件：</b>%s</div>
-</div>""" % (p["rank"], p["name"], p["code"], tag, p["score"],
-            p["price"], p["chg"], p["amount_yi"], reasons,
-            p["buy"], p["stop"], p["target"], p["invalid"])
-    pick_html += '</div>'
-
-    rev_html = "".join('<li><b>%s</b>（%s）：%s</li>' % r for r in REVISION_LOG)
-    rules = ("①决策权在你，模型只给依据禁指令话术 ②诚实红线：亏就是亏禁报喜藏忧 "
-             "③无依据不出票 ④先回测后模拟盘再实盘 ⑤每票预设数字止损触发即执行 "
-             "⑥计划外交易必须登记 ⑦数据不许猜不许编 ⑧全部版本化留修订记录 "
-             "⑨财联社任务线隔离不碰 ⑩中线≤2个自然月 ⑪仓位框架不盘中破 ⑫每周复盘闭环")
-
-    html = """<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="refresh" content="60">
-<title>持仓作战平台 · 实时盯盘 + 每日选股</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:#f5f6f8;color:#2d3436;padding:14px}
-.hd{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;margin-bottom:6px}
-h1{font-size:20px}.hd .meta{font-size:12px;color:#636e72}
-.badge{display:inline-block;background:#0984e3;color:#fff;font-size:12px;font-weight:700;padding:3px 10px;border-radius:12px;margin-left:8px;vertical-align:middle}
-a{color:#0984e3;text-decoration:none}
-.ov{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:12px 0}
-.ov .box{background:#fff;border-radius:10px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
-.ov label{font-size:12px;color:#636e72;display:block;margin-bottom:4px}
-.ov b{font-size:20px}
-.sec{background:#fff;border-radius:12px;padding:14px;margin:14px 0;box-shadow:0 1px 4px rgba(0,0,0,.07)}
-.sec h2{font-size:17px;margin-bottom:10px}.sec h2 small{font-size:12px;color:#636e72;font-weight:400}
-.card{background:#fff;border-radius:12px;padding:14px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
-.card.alert{border:2px solid #e17055}
-.chead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:10px}
-.nm{font-size:17px;font-weight:700}
-.px{font-size:30px;font-weight:800}
-.chg{font-size:16px;font-weight:700}
-.cls{background:#dfe6e9;color:#636e72;font-size:11px;padding:2px 8px;border-radius:10px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin-bottom:10px}
-.grid label{font-size:12px;color:#636e72;display:block}
-.grid b{font-size:14px;font-weight:600}
-.range{position:relative;height:22px;background:#dfe6e9;border-radius:11px;margin:8px 0;overflow:hidden}
-.rangefill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#00b89433,#d6303133)}
-.rangelabel{position:absolute;width:100%;text-align:center;font-size:12px;line-height:22px}
-.fund{font-size:13px;margin:6px 0;color:#636e72}
-.mod{font-size:13.5px;background:#f1f2f6;border-left:4px solid #0984e3;padding:8px 10px;border-radius:0 8px 8px 0;margin:6px 0;line-height:1.65}
-.mod.disc{border-left-color:#e17055;background:#fdf2ec}
-.alerts{margin-top:6px}
-.tag{display:inline-block;background:#ffeaa7;color:#d63031;font-size:12px;padding:2px 8px;border-radius:10px;margin:2px 4px 2px 0}
-.tag.ok{background:#dfe6e9;color:#636e72}
-.pmeta{font-size:12px;color:#636e72;margin-bottom:8px}
-.pick{border:1px solid #dfe6e9;border-radius:10px;padding:10px 12px;margin-bottom:10px}
-.phead{display:flex;gap:14px;align-items:baseline;flex-wrap:wrap;margin-bottom:6px}
-.pnm{font-size:15px;font-weight:700}
-.pscore{color:#0984e3;font-weight:700;font-size:13px}
-.pprice{font-size:12px;color:#636e72}
-.why{margin:4px 0 6px 18px;font-size:13px;line-height:1.7}
-.prow{font-size:13px;line-height:1.6;margin:2px 0}
-.ft{background:#fff;border-radius:12px;padding:14px;margin:14px 0;font-size:12px;color:#636e72;line-height:1.8;box-shadow:0 1px 3px rgba(0,0,0,.06)}
-.ft h3{font-size:13px;color:#2d3436;margin-bottom:6px}
-.ft ol{margin-left:18px}
-</style>
-</head>
-<body>
-<div class="hd">
-  <h1>持仓作战平台<span class="badge">__VER__</span> <a href="flows.html">→ 资金流看板</a></h1>
-  <div class="meta">生成 __GEN__ ｜ 每60秒自动刷新 ｜ 红=涨/盈利 绿=跌/亏损</div>
-</div>
-<div class="ov">
-  <div class="box"><label>总市值</label><b>__TOTMV__ 万</b></div>
-  <div class="box"><label>持仓总盈亏</label><b style="color:__TOTPLC__">__TOTPL__ 万 (__TOTPLPCT__%%)</b></div>
-  <div class="box"><label>当日盈亏</label><b style="color:__TOTDAYC__">__TOTDAY__ 万</b></div>
-  <div class="box"><label>持仓数</label><b>__N__ 只</b></div>
-</div>
-__CARDS__
-__PICKS__
-<div class="ft">
-  <h3>修订记录</h3>
-  <ol>__REV__</ol>
-  <h3>铁律（项目宪法）</h3>
-  <div>__RULES__</div>
-  <h3>数据口径</h3>
-  <div>实时行情：腾讯行情接口（分钟级快照，收盘后量比字段失真故盘后隐藏）；日线因子：新浪日K（EXPMA/均线/支撑压力/123法则）；主力净额：同花顺口径（超大单+大单），取自资金流账本最近交易日。选股引擎数据源：新浪全市场截面+新浪日K+同花顺资金流（东财接口当前403降级）。<br>
-  本平台为信息与规则工具，非持牌投顾服务；所有操作由你决策，盈亏由你承担。策略指导均为条件式参考，触发条件与依据已在各模块列明。</div>
-</div>
-</body>
-</html>"""
-    html = (html.replace("__VER__", VERSION).replace("__GEN__", gen)
-            .replace("__TOTMV__", "{:,.2f}".format(tot_mv / 1e4))
-            .replace("__TOTPLC__", "#d63031" if tot_pl >= 0 else "#00b894")
-            .replace("__TOTPL__", "{:+,.2f}".format(tot_pl / 1e4))
-            .replace("__TOTPLPCT__", "%+.2f" % tot_pl_pct)
-            .replace("__TOTDAYC__", "#d63031" if tot_day >= 0 else "#00b894")
-            .replace("__TOTDAY__", "{:+,.2f}".format(tot_day / 1e4))
-            .replace("__N__", str(len(rows)))
-            .replace("__CARDS__", "".join(cards))
-            .replace("__PICKS__", pick_html)
-            .replace("__REV__", rev_html)
-            .replace("__RULES__", rules))
-    (DIR / "position.html").write_text(html, encoding="utf-8")
-    (DIR / "index.html").write_text(html, encoding="utf-8")
-    return tot_pl
+    import render_v3
+    return render_v3.render(rows)
 
 
 if __name__ == "__main__":
@@ -430,4 +288,4 @@ if __name__ == "__main__":
               % (r["code"], r["name"], r["price"], r["chg_pct"],
                  "{:,}".format(r["shares"]), r["pl"] / 1e4, r["pl_pct"]))
     pl = render(rows)
-    print("组合总盈亏: %+.2f万 | v2.0 页面已生成" % (pl / 1e4))
+    print("组合总盈亏: %+.2f万 | v3.0 页面已生成" % (pl / 1e4))
