@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
   "generated_at": "2026-10-21 16:19:34",
   "market_scanned": 5575,
   "layer1_pool": 250,
@@ -152,4 +153,13 @@
       "amp20": 2.71
     }
   ]
+=======
+  "generated_at": "2026-10-21 08:19:58",
+  "market_scanned": 0,
+  "layer1_pool": 0,
+  "layer2_scored": 0,
+  "data_source": "新浪全市场+新浪日K+同花顺资金流(东财当前403降级)",
+  "elapsed_sec": 30.7,
+  "picks": []
+>>>>>>> 7e7b648b3e748f2f9a05d556b93e2ae7bbc89e95
 }
