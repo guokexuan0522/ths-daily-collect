@@ -131,6 +131,11 @@ a{color:#74b9ff;text-decoration:none}
 .btcmp .cmp.sub{font-size:11px;color:#636e72;font-weight:400}
 .btverdict{border-left:5px solid #e0322f;background:#fdeceb;border-radius:0 10px 10px 0;padding:10px 14px;margin-bottom:10px;font-size:13.5px;line-height:1.7}
 .btverdict b{display:block;margin-bottom:2px;color:#c0392b}
+/* M4 自身进化对比条 */
+.btm4{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:baseline;background:#eef7f0;border-radius:10px;padding:9px 12px;margin-bottom:8px;font-size:12.5px;line-height:1.6}
+.btm4>b{color:#00a37a;display:block;width:100%;margin-bottom:2px}
+.btm4 span{background:#fff;border:1px solid #dfe6e9;border-radius:8px;padding:3px 9px}
+.btm4 s{color:#b2bec3;text-decoration:line-through;margin-right:3px}
 /* ===== 页脚 ===== */
 .ft{background:#fff;border-radius:12px;padding:14px;margin:14px 0;font-size:12px;color:#636e72;line-height:1.9;box-shadow:0 1px 3px rgba(0,0,0,.06)}
 .ft h3{font-size:13px;color:#2d3436;margin-bottom:6px}
@@ -147,23 +152,23 @@ a{color:#74b9ff;text-decoration:none}
 <body>
 <div class="top">
   <div class="hdrow">
-    <h1>📈 持仓作战平台<span class="badge">v3.1</span>
-      <span class="lamp">🔴 已收盘·盘后复盘</span></h1>
-    <div class="meta">生成 2026-10-20 22:10:34 ｜ 每60秒自动刷新 ｜ <a href="flows.html">→ 资金流看板</a> ｜ 红=涨/盈利 · 绿=跌/亏损</div>
+    <h1>📈 持仓作战平台<span class="badge">v3.2</span>
+      <span class="lamp">⚪ 盘前</span></h1>
+    <div class="meta">生成 2026-10-21 08:20:03 ｜ 每60秒自动刷新 ｜ <a href="flows.html">→ 资金流看板</a> ｜ 红=涨/盈利 · 绿=跌/亏损</div>
   </div>
   <div class="ov">
-    <div class="box"><label>总市值</label><b>396.26 万</b><div class="sub">总成本 648.69 万</div></div>
-    <div class="box"><label>持仓总盈亏</label><b style="color:#00a37a">-252.44 万</b><div class="sub">-38.91%</div></div>
-    <div class="box"><label>当日盈亏</label><b style="color:#e0322f">+11.73 万</b><div class="sub">按今日涨跌×持仓</div></div>
+    <div class="box"><label>总市值</label><b>393.24 万</b><div class="sub">总成本 648.69 万</div></div>
+    <div class="box"><label>持仓总盈亏</label><b style="color:#00a37a">-255.45 万</b><div class="sub">-39.38%</div></div>
+    <div class="box"><label>当日盈亏</label><b style="color:#00a37a">-3.01 万</b><div class="sub">按今日涨跌×持仓</div></div>
     <div class="box"><label>持仓数</label><b>4 只</b><div class="sub">超短1-3只纪律内</div></div>
-    <div class="box"><label>今日主推</label><b>中航成飞(126.9) / 西部超导(116.6) / 华测检测(115.0)</b><div class="sub">候选池详见选股区</div></div>
+    <div class="box"><label>今日主推</label><b>-</b><div class="sub">候选池详见选股区</div></div>
   </div>
 </div>
 
 <div class="sec">
   <h2>📊 持仓作战区 <small>盘中实时意见（买/加/做T）＋ 盘后作战指令（明日走留判断），技术与数据点已标注</small></h2>
   
-<div class="card alert">
+<div class="card">
   <div class="chead">
     <div class="nmbox">
       <span class="nm">ST中路</span><span class="code">600818</span>
@@ -171,33 +176,33 @@ a{color:#74b9ff;text-decoration:none}
       <span class="cls">已收盘</span>
     </div>
     <div class="pxbox">
-      <span class="px" style="color:#e0322f">8.40</span>
-      <span class="chg" style="color:#e0322f">+3.32%</span>
-      <span class="daypl" style="color:#e0322f">日内+2.11万</span>
+      <span class="px" style="color:#00a37a">8.35</span>
+      <span class="chg" style="color:#00a37a">-0.60%</span>
+      <span class="daypl" style="color:#00a37a">日内-0.39万</span>
     </div>
   </div>
-  <div class="alerts"><span class="tag">⚠ 涨跌幅3.32%≥3%</span><span class="tag">⚠ 临近涨停(8.54)</span></div>
+  <div class="alerts"><span class="tag ok">✓ 无异动</span></div>
   <div class="kpis">
     <div class="kpi"><label>持仓数量</label><b>78,200 股</b></div>
     <div class="kpi"><label>成本价</label><b>9.3516</b></div>
-    <div class="kpi"><label>市值 ｜ 仓位占比</label><b>65.69万 ｜ <span class="hl">16.6%</span></b></div>
-    <div class="kpi"><label>持仓盈亏</label><b style="color:#00a37a">-7.44万 (-10.18%)</b></div>
-    <div class="kpi"><label>当日盈亏</label><b style="color:#e0322f">+2.11 万</b></div>
-    <div class="kpi"><label>今日 高/低</label><b>8.40 / 8.01</b></div>
-    <div class="kpi"><label>涨跌停</label><b>8.54 / 7.72</b></div>
-    <div class="kpi"><label>量比 ｜ 换手</label><b>盘后不显示 ｜ 1.41%</b></div>
-    <div class="kpi"><label>成交额</label><b>2786 万</b></div>
-    <div class="kpi"><label>振幅 ｜ 20日平均振幅</label><b>4.8% ｜ 5.2%</b></div>
+    <div class="kpi"><label>市值 ｜ 仓位占比</label><b>65.30万 ｜ <span class="hl">16.6%</span></b></div>
+    <div class="kpi"><label>持仓盈亏</label><b style="color:#00a37a">-7.83万 (-10.71%)</b></div>
+    <div class="kpi"><label>当日盈亏</label><b style="color:#00a37a">-0.39 万</b></div>
+    <div class="kpi"><label>今日 高/低</label><b>8.66 / 8.27</b></div>
+    <div class="kpi"><label>涨跌停</label><b>8.82 / 7.98</b></div>
+    <div class="kpi"><label>量比 ｜ 换手</label><b>盘后不显示 ｜ 1.19%</b></div>
+    <div class="kpi"><label>成交额</label><b>2393 万</b></div>
+    <div class="kpi"><label>振幅 ｜ 20日平均振幅</label><b>4.6% ｜ 5.2%</b></div>
   </div>
-  <div class="levels"><span class="lvtitle">关键价位</span><span class="lv lv-stop"><em>🛑</em>止损 <b>7.98</b><i>-5.0%</i><i>现价基准·成本止损已穿</i></span><span class="lv lv-cost"><em></em>成本 <b>9.35</b></span><span class="lv lv-now"><em></em>现价 <b>8.40</b></span><span class="lv lv-ma"><em></em>EXPMA12 <b>8.58</b><i>-2.1%</i></span><span class="lv lv-ma"><em></em>EXPMA50 <b>8.01</b><i>+4.8%</i></span><span class="lv lv-res"><em></em>压力 <b>9.90</b></span><span class="lv lv-sup"><em></em>支撑 <b>7.61</b></span><span class="lv lv-tgt"><em>🎯</em>目标 <b>10.10</b><i>+20.2%</i></span></div>
-  <div class="range"><div class="rangefill" style="width:100%"></div>
-    <div class="rangelabel">日内位置 100%（低8.01 → 高8.40，均价8.28）</div></div>
-  <div class="fundline">📊 主力净额（同花顺口径·超大单+大单，2026-10-20）：<b style="color:#e0322f">+205.76万</b></div>
+  <div class="levels"><span class="lvtitle">关键价位</span><span class="lv lv-stop"><em>🛑</em>止损 <b>7.93</b><i>-5.0%</i><i>现价基准·成本止损已穿</i></span><span class="lv lv-cost"><em></em>成本 <b>9.35</b></span><span class="lv lv-now"><em></em>现价 <b>8.35</b></span><span class="lv lv-ma"><em></em>EXPMA12 <b>8.55</b><i>-2.3%</i></span><span class="lv lv-ma"><em></em>EXPMA50 <b>8.02</b><i>+4.1%</i></span><span class="lv lv-res"><em></em>压力 <b>9.90</b></span><span class="lv lv-sup"><em></em>支撑 <b>7.61</b></span><span class="lv lv-tgt"><em>🎯</em>目标 <b>10.10</b><i>+21.0%</i></span></div>
+  <div class="range"><div class="rangefill" style="width:21%"></div>
+    <div class="rangelabel">日内位置 21%（低8.27 → 高8.66，均价8.45）</div></div>
+  <div class="fundline">📊 主力净额（同花顺口径·超大单+大单，2026-10-21）：<b style="color:#e0322f">+178.86万</b></div>
   <div class="mods">
-    <div class="mod mt"><b>⏱ 分时做T指导 · 盘中</b><p>已收盘：今日低8.01→高8.40，收于日内位置100%，均价8.28。明日以今日低点8.01为分时防守位，跌破不接；放量过今日高点8.40再考虑跟进。</p></div>
-    <div class="mod mw"><b>📈 日线波段指导 · 盘中</b><p>支撑：EXPMA12 8.58 / 近10日低点7.61 / EXPMA50 8.01；压力：近10日高点9.90 / 60日高点9.90。趋势中性：EXPMA12（8.58）附近震荡对待，突破跟进、破位退。</p></div>
-    <div class="mod mo-warn"><b>🧭 盘后作战指令 · 明日/未来几日走留判断</b><p>【减仓】浮亏-10.2%深套，成本止损线8.88早已跌穿：明日反弹至EXPMA12（8.58）附近坚决减仓降低敞口；若经你决策继续持有，以现价为基准重设止损7.98（-5%），跌破无条件清仓，不许再扛。</p></div>
-    <div class="mod md"><b>🛡 超短交易纪律</b><p>① 持仓周期：买入起5个交易日内必须决断，最长15日（波段）；② 止损：买入价-5%（本票现价对应7.98），触发无条件执行；③ 止盈：+8%减半（现价对应9.07），剩余仓位看EXPMA12（8.58）去留；④ 禁止：不在候选池外的股票冲动买入，计划外操作必须登记原因。</p></div>
+    <div class="mod mt"><b>⏱ 分时做T指导 · 盘中</b><p>已收盘：今日低8.27→高8.66，收于日内位置21%，均价8.45。明日以今日低点8.27为分时防守位，跌破不接；放量过今日高点8.66再考虑跟进。</p></div>
+    <div class="mod mw"><b>📈 日线波段指导 · 盘中</b><p>支撑：EXPMA12 8.55 / 近10日低点7.61 / EXPMA50 8.02；压力：近10日高点9.90 / 60日高点9.90。123法则出现2项下跌确认：反弹不追，守EXPMA12（8.55），破位止损。</p></div>
+    <div class="mod mo-warn"><b>🧭 盘后作战指令 · 明日/未来几日走留判断</b><p>【减仓】浮亏-10.7%深套，成本止损线8.88早已跌穿：明日反弹至EXPMA12（8.55）附近坚决减仓降低敞口；若经你决策继续持有，以现价为基准重设止损7.93（-5%），跌破无条件清仓，不许再扛。</p></div>
+    <div class="mod md"><b>🛡 超短交易纪律</b><p>① 持仓周期：买入起5个交易日内必须决断，最长15日（波段）；② 止损：买入价-5%（本票现价对应7.93），触发无条件执行；③ 止盈：+8%减半（现价对应9.02），剩余仓位看EXPMA12（8.55）去留；④ 禁止：不在候选池外的股票冲动买入，计划外操作必须登记原因。</p></div>
   </div>
 </div>
 <div class="card">
@@ -208,36 +213,36 @@ a{color:#74b9ff;text-decoration:none}
       <span class="cls">已收盘</span>
     </div>
     <div class="pxbox">
-      <span class="px" style="color:#e0322f">88.38</span>
-      <span class="chg" style="color:#e0322f">+1.70%</span>
-      <span class="daypl" style="color:#e0322f">日内+0.12万</span>
+      <span class="px" style="color:#e0322f">90.00</span>
+      <span class="chg" style="color:#e0322f">+1.83%</span>
+      <span class="daypl" style="color:#e0322f">日内+0.13万</span>
     </div>
   </div>
   <div class="alerts"><span class="tag ok">✓ 无异动</span></div>
   <div class="kpis">
     <div class="kpi"><label>持仓数量</label><b>800 股</b></div>
     <div class="kpi"><label>成本价</label><b>98.3760</b></div>
-    <div class="kpi"><label>市值 ｜ 仓位占比</label><b>7.07万 ｜ <span class="hl">1.8%</span></b></div>
-    <div class="kpi"><label>持仓盈亏</label><b style="color:#00a37a">-0.80万 (-10.16%)</b></div>
-    <div class="kpi"><label>当日盈亏</label><b style="color:#e0322f">+0.12 万</b></div>
-    <div class="kpi"><label>今日 高/低</label><b>90.05 / 85.00</b></div>
-    <div class="kpi"><label>涨跌停</label><b>95.59 / 78.21</b></div>
-    <div class="kpi"><label>量比 ｜ 换手</label><b>盘后不显示 ｜ 2.21%</b></div>
-    <div class="kpi"><label>成交额</label><b>191389 万</b></div>
-    <div class="kpi"><label>振幅 ｜ 20日平均振幅</label><b>5.8% ｜ 7.2%</b></div>
+    <div class="kpi"><label>市值 ｜ 仓位占比</label><b>7.20万 ｜ <span class="hl">1.8%</span></b></div>
+    <div class="kpi"><label>持仓盈亏</label><b style="color:#00a37a">-0.67万 (-8.51%)</b></div>
+    <div class="kpi"><label>当日盈亏</label><b style="color:#e0322f">+0.13 万</b></div>
+    <div class="kpi"><label>今日 高/低</label><b>93.20 / 88.50</b></div>
+    <div class="kpi"><label>涨跌停</label><b>97.22 / 79.54</b></div>
+    <div class="kpi"><label>量比 ｜ 换手</label><b>盘后不显示 ｜ 2.83%</b></div>
+    <div class="kpi"><label>成交额</label><b>252738 万</b></div>
+    <div class="kpi"><label>振幅 ｜ 20日平均振幅</label><b>5.3% ｜ 7.0%</b></div>
   </div>
-  <div class="levels"><span class="lvtitle">关键价位</span><span class="lv lv-stop"><em>🛑</em>止损 <b>83.96</b><i>-5.0%</i><i>现价基准·成本止损已穿</i></span><span class="lv lv-cost"><em></em>成本 <b>98.38</b></span><span class="lv lv-now"><em></em>现价 <b>88.38</b></span><span class="lv lv-ma"><em></em>EXPMA12 <b>94.17</b><i>-6.2%</i></span><span class="lv lv-ma"><em></em>EXPMA50 <b>94.44</b><i>-6.4%</i></span><span class="lv lv-res"><em></em>压力 <b>106.20</b></span><span class="lv lv-sup"><em></em>支撑 <b>83.13</b></span><span class="lv lv-tgt"><em>🎯</em>目标 <b>106.25</b><i>+20.2%</i></span></div>
-  <div class="range"><div class="rangefill" style="width:67%"></div>
-    <div class="rangelabel">日内位置 67%（低85.00 → 高90.05，均价88.23）</div></div>
-  <div class="fundline">📊 主力净额（同花顺口径·超大单+大单，2026-10-20）：<b style="color:#00a37a">-2,438.82万</b></div>
+  <div class="levels"><span class="lvtitle">关键价位</span><span class="lv lv-stop"><em>🛑</em>止损 <b>85.50</b><i>-5.0%</i><i>现价基准·成本止损已穿</i></span><span class="lv lv-cost"><em></em>成本 <b>98.38</b></span><span class="lv lv-now"><em></em>现价 <b>90.00</b></span><span class="lv lv-ma"><em></em>EXPMA12 <b>93.53</b><i>-3.8%</i></span><span class="lv lv-ma"><em></em>EXPMA50 <b>94.48</b><i>-4.7%</i></span><span class="lv lv-res"><em></em>压力 <b>105.68</b></span><span class="lv lv-sup"><em></em>支撑 <b>83.13</b></span><span class="lv lv-tgt"><em>🎯</em>目标 <b>106.25</b><i>+18.1%</i></span></div>
+  <div class="range"><div class="rangefill" style="width:32%"></div>
+    <div class="rangelabel">日内位置 32%（低88.50 → 高93.20，均价91.08）</div></div>
+  <div class="fundline">📊 主力净额（同花顺口径·超大单+大单，2026-10-21）：<b style="color:#e0322f">+7,976.09万</b></div>
   <div class="mods">
-    <div class="mod mt"><b>⏱ 分时做T指导 · 盘中</b><p>已收盘：今日低85.00→高90.05，收于日内位置67%，均价88.23。明日以今日低点85.00为分时防守位，跌破不接；放量过今日高点90.05再考虑跟进。</p></div>
-    <div class="mod mw"><b>📈 日线波段指导 · 盘中</b><p>支撑：EXPMA12 94.17 / 近10日低点83.13 / EXPMA50 94.44；压力：近10日高点106.20 / 60日高点113.60。价格在EXPMA50下方，波段弱势，反弹至EXPMA12附近（94.17）先减后看。</p></div>
-    <div class="mod mo-warn"><b>🧭 盘后作战指令 · 明日/未来几日走留判断</b><p>【减仓】浮亏-10.2%深套，成本止损线93.46早已跌穿：明日反弹至EXPMA12（94.17）附近坚决减仓降低敞口；若经你决策继续持有，以现价为基准重设止损83.96（-5%），跌破无条件清仓，不许再扛。</p></div>
-    <div class="mod md"><b>🛡 超短交易纪律</b><p>① 持仓周期：买入起5个交易日内必须决断，最长15日（波段）；② 止损：买入价-5%（本票现价对应83.96），触发无条件执行；③ 止盈：+8%减半（现价对应95.45），剩余仓位看EXPMA12（94.17）去留；④ 禁止：不在候选池外的股票冲动买入，计划外操作必须登记原因。</p></div>
+    <div class="mod mt"><b>⏱ 分时做T指导 · 盘中</b><p>已收盘：今日低88.50→高93.20，收于日内位置32%，均价91.08。明日以今日低点88.50为分时防守位，跌破不接；放量过今日高点93.20再考虑跟进。</p></div>
+    <div class="mod mw"><b>📈 日线波段指导 · 盘中</b><p>支撑：EXPMA12 93.53 / 近10日低点83.13 / EXPMA50 94.48；压力：近10日高点105.68 / 60日高点113.60。价格在EXPMA50下方，波段弱势，反弹至EXPMA12附近（93.53）先减后看。</p></div>
+    <div class="mod mo-warn"><b>🧭 盘后作战指令 · 明日/未来几日走留判断</b><p>【减仓】浮亏-8.5%深套，成本止损线93.46早已跌穿：明日反弹至EXPMA12（93.53）附近坚决减仓降低敞口；若经你决策继续持有，以现价为基准重设止损85.50（-5%），跌破无条件清仓，不许再扛。</p></div>
+    <div class="mod md"><b>🛡 超短交易纪律</b><p>① 持仓周期：买入起5个交易日内必须决断，最长15日（波段）；② 止损：买入价-5%（本票现价对应85.50），触发无条件执行；③ 止盈：+8%减半（现价对应97.20），剩余仓位看EXPMA12（93.53）去留；④ 禁止：不在候选池外的股票冲动买入，计划外操作必须登记原因。</p></div>
   </div>
 </div>
-<div class="card alert">
+<div class="card">
   <div class="chead">
     <div class="nmbox">
       <span class="nm">春光集团</span><span class="code">301531</span>
@@ -245,33 +250,33 @@ a{color:#74b9ff;text-decoration:none}
       <span class="cls">已收盘</span>
     </div>
     <div class="pxbox">
-      <span class="px" style="color:#e0322f">41.25</span>
-      <span class="chg" style="color:#e0322f">+3.83%</span>
-      <span class="daypl" style="color:#e0322f">日内+8.36万</span>
+      <span class="px" style="color:#00a37a">40.72</span>
+      <span class="chg" style="color:#00a37a">-1.28%</span>
+      <span class="daypl" style="color:#00a37a">日内-2.92万</span>
     </div>
   </div>
-  <div class="alerts"><span class="tag">⚠ 涨跌幅3.83%≥3%</span></div>
+  <div class="alerts"><span class="tag ok">✓ 无异动</span></div>
   <div class="kpis">
     <div class="kpi"><label>持仓数量</label><b>55,000 股</b></div>
     <div class="kpi"><label>成本价</label><b>82.5472</b></div>
-    <div class="kpi"><label>市值 ｜ 仓位占比</label><b>226.88万 ｜ <span class="hl">57.3%</span></b></div>
-    <div class="kpi"><label>持仓盈亏</label><b style="color:#00a37a">-227.13万 (-50.03%)</b></div>
-    <div class="kpi"><label>当日盈亏</label><b style="color:#e0322f">+8.36 万</b></div>
-    <div class="kpi"><label>今日 高/低</label><b>42.29 / 39.00</b></div>
-    <div class="kpi"><label>涨跌停</label><b>47.68 / 31.78</b></div>
-    <div class="kpi"><label>量比 ｜ 换手</label><b>盘后不显示 ｜ 5.32%</b></div>
-    <div class="kpi"><label>成交额</label><b>10269 万</b></div>
-    <div class="kpi"><label>振幅 ｜ 20日平均振幅</label><b>8.3% ｜ 5.6%</b></div>
+    <div class="kpi"><label>市值 ｜ 仓位占比</label><b>223.96万 ｜ <span class="hl">57.0%</span></b></div>
+    <div class="kpi"><label>持仓盈亏</label><b style="color:#00a37a">-230.05万 (-50.67%)</b></div>
+    <div class="kpi"><label>当日盈亏</label><b style="color:#00a37a">-2.92 万</b></div>
+    <div class="kpi"><label>今日 高/低</label><b>41.96 / 40.28</b></div>
+    <div class="kpi"><label>涨跌停</label><b>49.50 / 33.00</b></div>
+    <div class="kpi"><label>量比 ｜ 换手</label><b>盘后不显示 ｜ 3.63%</b></div>
+    <div class="kpi"><label>成交额</label><b>7008 万</b></div>
+    <div class="kpi"><label>振幅 ｜ 20日平均振幅</label><b>4.1% ｜ 5.4%</b></div>
   </div>
-  <div class="levels"><span class="lvtitle">关键价位</span><span class="lv lv-stop"><em>🛑</em>止损 <b>39.19</b><i>-5.0%</i><i>现价基准·成本止损已穿</i></span><span class="lv lv-cost"><em></em>成本 <b>82.55</b></span><span class="lv lv-now"><em></em>现价 <b>41.25</b></span><span class="lv lv-ma"><em></em>EXPMA12 <b>43.54</b><i>-5.3%</i></span><span class="lv lv-ma"><em></em>EXPMA50 <b>47.41</b><i>-13.0%</i></span><span class="lv lv-res"><em></em>压力 <b>50.08</b></span><span class="lv lv-sup"><em></em>支撑 <b>37.91</b></span><span class="lv lv-tgt"><em>🎯</em>目标 <b>89.15</b><i>+116.1%</i></span></div>
-  <div class="range"><div class="rangefill" style="width:68%"></div>
-    <div class="rangelabel">日内位置 68%（低39.00 → 高42.29，均价41.15）</div></div>
-  <div class="fundline">📊 主力净额（同花顺口径·超大单+大单，2026-10-20）：<b style="color:#e0322f">+382.45万</b></div>
+  <div class="levels"><span class="lvtitle">关键价位</span><span class="lv lv-stop"><em>🛑</em>止损 <b>38.68</b><i>-5.0%</i><i>现价基准·成本止损已穿</i></span><span class="lv lv-cost"><em></em>成本 <b>82.55</b></span><span class="lv lv-now"><em></em>现价 <b>40.72</b></span><span class="lv lv-ma"><em></em>EXPMA12 <b>43.10</b><i>-5.5%</i></span><span class="lv lv-ma"><em></em>EXPMA50 <b>47.14</b><i>-13.6%</i></span><span class="lv lv-res"><em></em>压力 <b>49.86</b></span><span class="lv lv-sup"><em></em>支撑 <b>37.91</b></span><span class="lv lv-tgt"><em>🎯</em>目标 <b>89.15</b><i>+118.9%</i></span></div>
+  <div class="range"><div class="rangefill" style="width:26%"></div>
+    <div class="rangelabel">日内位置 26%（低40.28 → 高41.96，均价41.14）</div></div>
+  <div class="fundline">📊 主力净额（同花顺口径·超大单+大单，2026-10-21）：<b style="color:#00a37a">-119.65万</b></div>
   <div class="mods">
-    <div class="mod mt"><b>⏱ 分时做T指导 · 盘中</b><p>已收盘：今日低39.00→高42.29，收于日内位置68%，均价41.15。明日以今日低点39.00为分时防守位，跌破不接；放量过今日高点42.29再考虑跟进。</p></div>
-    <div class="mod mw"><b>📈 日线波段指导 · 盘中</b><p>支撑：EXPMA12 43.54 / 近10日低点37.91 / EXPMA50 47.41；压力：近10日高点50.08 / 60日高点56.55。价格在EXPMA50下方，波段弱势，反弹至EXPMA12附近（43.54）先减后看。</p></div>
-    <div class="mod mo-warn"><b>🧭 盘后作战指令 · 明日/未来几日走留判断</b><p>【减仓】浮亏-50.0%深套，成本止损线78.42早已跌穿：明日反弹至EXPMA12（43.54）附近坚决减仓降低敞口；若经你决策继续持有，以现价为基准重设止损39.19（-5%），跌破无条件清仓，不许再扛。</p></div>
-    <div class="mod md"><b>🛡 超短交易纪律</b><p>① 持仓周期：买入起5个交易日内必须决断，最长15日（波段）；② 止损：买入价-5%（本票现价对应39.19），触发无条件执行；③ 止盈：+8%减半（现价对应44.55），剩余仓位看EXPMA12（43.54）去留；④ 禁止：不在候选池外的股票冲动买入，计划外操作必须登记原因。</p></div>
+    <div class="mod mt"><b>⏱ 分时做T指导 · 盘中</b><p>已收盘：今日低40.28→高41.96，收于日内位置26%，均价41.14。明日以今日低点40.28为分时防守位，跌破不接；放量过今日高点41.96再考虑跟进。</p></div>
+    <div class="mod mw"><b>📈 日线波段指导 · 盘中</b><p>支撑：EXPMA12 43.10 / 近10日低点37.91 / EXPMA50 47.14；压力：近10日高点49.86 / 60日高点56.55。价格在EXPMA50下方，波段弱势，反弹至EXPMA12附近（43.10）先减后看。</p></div>
+    <div class="mod mo-warn"><b>🧭 盘后作战指令 · 明日/未来几日走留判断</b><p>【减仓】浮亏-50.7%深套，成本止损线78.42早已跌穿：明日反弹至EXPMA12（43.10）附近坚决减仓降低敞口；若经你决策继续持有，以现价为基准重设止损38.68（-5%），跌破无条件清仓，不许再扛。</p></div>
+    <div class="mod md"><b>🛡 超短交易纪律</b><p>① 持仓周期：买入起5个交易日内必须决断，最长15日（波段）；② 止损：买入价-5%（本票现价对应38.68），触发无条件执行；③ 止盈：+8%减半（现价对应43.98），剩余仓位看EXPMA12（43.10）去留；④ 禁止：不在候选池外的股票冲动买入，计划外操作必须登记原因。</p></div>
   </div>
 </div>
 <div class="card">
@@ -282,124 +287,44 @@ a{color:#74b9ff;text-decoration:none}
       <span class="cls">已收盘</span>
     </div>
     <div class="pxbox">
-      <span class="px" style="color:#e0322f">17.86</span>
-      <span class="chg" style="color:#e0322f">+1.19%</span>
-      <span class="daypl" style="color:#e0322f">日内+1.14万</span>
+      <span class="px" style="color:#e0322f">17.89</span>
+      <span class="chg" style="color:#e0322f">+0.17%</span>
+      <span class="daypl" style="color:#e0322f">日内+0.16万</span>
     </div>
   </div>
   <div class="alerts"><span class="tag ok">✓ 无异动</span></div>
   <div class="kpis">
     <div class="kpi"><label>持仓数量</label><b>54,100 股</b></div>
     <div class="kpi"><label>成本价</label><b>21.0137</b></div>
-    <div class="kpi"><label>市值 ｜ 仓位占比</label><b>96.62万 ｜ <span class="hl">24.4%</span></b></div>
-    <div class="kpi"><label>持仓盈亏</label><b style="color:#00a37a">-17.06万 (-15.01%)</b></div>
-    <div class="kpi"><label>当日盈亏</label><b style="color:#e0322f">+1.14 万</b></div>
-    <div class="kpi"><label>今日 高/低</label><b>18.28 / 17.38</b></div>
-    <div class="kpi"><label>涨跌停</label><b>19.41 / 15.88</b></div>
-    <div class="kpi"><label>量比 ｜ 换手</label><b>盘后不显示 ｜ 10.36%</b></div>
-    <div class="kpi"><label>成交额</label><b>218346 万</b></div>
-    <div class="kpi"><label>振幅 ｜ 20日平均振幅</label><b>5.1% ｜ 6.9%</b></div>
+    <div class="kpi"><label>市值 ｜ 仓位占比</label><b>96.78万 ｜ <span class="hl">24.6%</span></b></div>
+    <div class="kpi"><label>持仓盈亏</label><b style="color:#00a37a">-16.90万 (-14.87%)</b></div>
+    <div class="kpi"><label>当日盈亏</label><b style="color:#e0322f">+0.16 万</b></div>
+    <div class="kpi"><label>今日 高/低</label><b>18.45 / 17.76</b></div>
+    <div class="kpi"><label>涨跌停</label><b>19.65 / 16.07</b></div>
+    <div class="kpi"><label>量比 ｜ 换手</label><b>盘后不显示 ｜ 8.61%</b></div>
+    <div class="kpi"><label>成交额</label><b>183232 万</b></div>
+    <div class="kpi"><label>振幅 ｜ 20日平均振幅</label><b>3.9% ｜ 6.5%</b></div>
   </div>
-  <div class="levels"><span class="lvtitle">关键价位</span><span class="lv lv-stop"><em>🛑</em>止损 <b>16.97</b><i>-5.0%</i><i>现价基准·成本止损已穿</i></span><span class="lv lv-cost"><em></em>成本 <b>21.01</b></span><span class="lv lv-now"><em></em>现价 <b>17.86</b></span><span class="lv lv-ma"><em></em>EXPMA12 <b>18.78</b><i>-4.9%</i></span><span class="lv lv-ma"><em></em>EXPMA50 <b>19.77</b><i>-9.7%</i></span><span class="lv lv-res"><em></em>压力 <b>21.19</b></span><span class="lv lv-sup"><em></em>支撑 <b>16.33</b></span><span class="lv lv-tgt"><em>🎯</em>目标 <b>22.69</b><i>+27.0%</i></span></div>
-  <div class="range"><div class="rangefill" style="width:53%"></div>
-    <div class="rangelabel">日内位置 53%（低17.38 → 高18.28，均价17.91）</div></div>
-  <div class="fundline">📊 主力净额（同花顺口径·超大单+大单，2026-10-20）：<b style="color:#e0322f">+2,957.97万</b></div>
+  <div class="levels"><span class="lvtitle">关键价位</span><span class="lv lv-stop"><em>🛑</em>止损 <b>17.00</b><i>-5.0%</i><i>现价基准·成本止损已穿</i></span><span class="lv lv-cost"><em></em>成本 <b>21.01</b></span><span class="lv lv-now"><em></em>现价 <b>17.89</b></span><span class="lv lv-ma"><em></em>EXPMA12 <b>18.65</b><i>-4.1%</i></span><span class="lv lv-ma"><em></em>EXPMA50 <b>19.63</b><i>-8.9%</i></span><span class="lv lv-res"><em></em>压力 <b>21.19</b></span><span class="lv lv-sup"><em></em>支撑 <b>16.33</b></span><span class="lv lv-tgt"><em>🎯</em>目标 <b>22.69</b><i>+26.8%</i></span></div>
+  <div class="range"><div class="rangefill" style="width:19%"></div>
+    <div class="rangelabel">日内位置 19%（低17.76 → 高18.45，均价18.09）</div></div>
+  <div class="fundline">📊 主力净额（同花顺口径·超大单+大单，2026-10-21）：<b style="color:#e0322f">+841.04万</b></div>
   <div class="mods">
-    <div class="mod mt"><b>⏱ 分时做T指导 · 盘中</b><p>已收盘：今日低17.38→高18.28，收于日内位置53%，均价17.91。明日以今日低点17.38为分时防守位，跌破不接；放量过今日高点18.28再考虑跟进。</p></div>
-    <div class="mod mw"><b>📈 日线波段指导 · 盘中</b><p>支撑：EXPMA12 18.78 / 近10日低点16.33 / EXPMA50 19.77；压力：近10日高点21.19 / 60日高点25.40。价格在EXPMA50下方，波段弱势，反弹至EXPMA12附近（18.78）先减后看。</p></div>
-    <div class="mod mo-warn"><b>🧭 盘后作战指令 · 明日/未来几日走留判断</b><p>【减仓】浮亏-15.0%深套，成本止损线19.96早已跌穿：明日反弹至EXPMA12（18.78）附近坚决减仓降低敞口；若经你决策继续持有，以现价为基准重设止损16.97（-5%），跌破无条件清仓，不许再扛。</p></div>
-    <div class="mod md"><b>🛡 超短交易纪律</b><p>① 持仓周期：买入起5个交易日内必须决断，最长15日（波段）；② 止损：买入价-5%（本票现价对应16.97），触发无条件执行；③ 止盈：+8%减半（现价对应19.29），剩余仓位看EXPMA12（18.78）去留；④ 禁止：不在候选池外的股票冲动买入，计划外操作必须登记原因。</p></div>
+    <div class="mod mt"><b>⏱ 分时做T指导 · 盘中</b><p>已收盘：今日低17.76→高18.45，收于日内位置19%，均价18.09。明日以今日低点17.76为分时防守位，跌破不接；放量过今日高点18.45再考虑跟进。</p></div>
+    <div class="mod mw"><b>📈 日线波段指导 · 盘中</b><p>支撑：EXPMA12 18.65 / 近10日低点16.33 / EXPMA50 19.63；压力：近10日高点21.19 / 60日高点25.40。价格在EXPMA50下方，波段弱势，反弹至EXPMA12附近（18.65）先减后看。</p></div>
+    <div class="mod mo-warn"><b>🧭 盘后作战指令 · 明日/未来几日走留判断</b><p>【减仓】浮亏-14.9%深套，成本止损线19.96早已跌穿：明日反弹至EXPMA12（18.65）附近坚决减仓降低敞口；若经你决策继续持有，以现价为基准重设止损17.00（-5%），跌破无条件清仓，不许再扛。</p></div>
+    <div class="mod md"><b>🛡 超短交易纪律</b><p>① 持仓周期：买入起5个交易日内必须决断，最长15日（波段）；② 止损：买入价-5%（本票现价对应17.00），触发无条件执行；③ 止盈：+8%减半（现价对应19.32），剩余仓位看EXPMA12（18.65）去留；④ 禁止：不在候选池外的股票冲动买入，计划外操作必须登记原因。</p></div>
   </div>
 </div>
 </div>
 
-<div class="sec"><h2>🎯 每日选股 · 候选池 <small>（全A海扫 → 截面筛选 → 多因子打分 → 资金加成；铁律#13：宁做短不做长，弹性不足直接剔除）</small></h2><div class="pmeta">生成于 2026-10-20 19:48:10 ｜ 扫描 5574 只 → 入池 500 → 打分 17 ｜ 耗时 134s ｜ 候选 5 只（★主推 3 只）｜ 数据源：新浪全市场+新浪日K+同花顺资金流(东财当前403降级)</div>
-<div class="pick primary">
-  <div class="phead">
-    <span class="rank">#1</span>
-    <span class="pnm">中航成飞 <small>302132</small></span>
-    <span class="ptag">★主推</span>
-    <span class="pprice" style="color:#e0322f">64.98（+0.28%）成交6.5亿 · 20日振幅3.4%</span>
-  </div>
-  <div class="scorebar"><div class="scorefill" style="width:100%"></div>
-    <span class="scorelabel">综合得分 <b>126.9</b> / 100</span></div>
-  <div class="fchs"><span class="fc">贴近度 99.7</span><span class="fc">弹性 3.4</span><span class="fc">5日涨幅 4.2</span><span class="fc">123法则 0.0</span><span class="fc" style="color:#e0322f;border-color:#e0322f">资金 +1,859万</span></div>
-  <ul class="why"><li>距20日高仅0.3%（横盘蓄势临近突破）</li><li>弹性优：近20日平均振幅3.4%（2-4%紧横盘带，越接近4%爆发力越强）</li><li>同花顺主力净流入+1859万(资金加成)</li></ul>
-  <div class="prow pb"><b>🛒 买入条件</b>回踩EXPMA12(61.81)或5日线(63.48)缩量不破低吸；放量突破今日最高64.98可追（需盘中确认）</div>
-  <div class="prow ps"><b>🛑 止损位</b>买入价-5%(61.73)或跌破EXPMA50(59.84)，二选一先到先执行</div>
-  <div class="prow pt"><b>🎯 目标位</b>第一目标70.18(+8%)；第二目标72.78(+12%)或60日高点66.43附近</div>
-  <div class="prow pi"><b>⛔ 失效条件</b>①跌破EXPMA50且放量 ②主力净流入连续2日转负 ③买入后5个交易日未脱离成本3%%以上</div>
-</div>
-<div class="pick primary">
-  <div class="phead">
-    <span class="rank">#2</span>
-    <span class="pnm">西部超导 <small>688122</small></span>
-    <span class="ptag">★主推</span>
-    <span class="pprice" style="color:#e0322f">55.40（+0.40%）成交5.6亿 · 20日振幅3.7%</span>
-  </div>
-  <div class="scorebar"><div class="scorefill" style="width:100%"></div>
-    <span class="scorelabel">综合得分 <b>116.6</b> / 100</span></div>
-  <div class="fchs"><span class="fc">贴近度 98.2</span><span class="fc">弹性 3.7</span><span class="fc">5日涨幅 0.5</span><span class="fc">123法则 0.0</span><span class="fc" style="color:#00a37a;border-color:#00a37a">资金 -2,228万</span></div>
-  <ul class="why"><li>距20日高仅1.8%（横盘蓄势临近突破）</li><li>弹性优：近20日平均振幅3.7%（2-4%紧横盘带，越接近4%爆发力越强）</li><li>同花顺主力净流出-2228万(无加成)</li></ul>
-  <div class="prow pb"><b>🛒 买入条件</b>回踩EXPMA12(53.38)或5日线(53.69)缩量不破低吸；放量突破今日最高55.40可追（需盘中确认）</div>
-  <div class="prow ps"><b>🛑 止损位</b>买入价-5%(52.63)或跌破EXPMA50(51.87)，二选一先到先执行</div>
-  <div class="prow pt"><b>🎯 目标位</b>第一目标59.83(+8%)；第二目标62.05(+12%)或60日高点56.42附近</div>
-  <div class="prow pi"><b>⛔ 失效条件</b>①跌破EXPMA50且放量 ②主力净流入连续2日转负 ③买入后5个交易日未脱离成本3%%以上</div>
-</div>
-<div class="pick primary">
-  <div class="phead">
-    <span class="rank">#3</span>
-    <span class="pnm">华测检测 <small>300012</small></span>
-    <span class="ptag">★主推</span>
-    <span class="pprice" style="color:#e0322f">15.52（+0.91%）成交5.7亿 · 20日振幅3.1%</span>
-  </div>
-  <div class="scorebar"><div class="scorefill" style="width:100%"></div>
-    <span class="scorelabel">综合得分 <b>115.0</b> / 100</span></div>
-  <div class="fchs"><span class="fc">贴近度 99.4</span><span class="fc">弹性 3.1</span><span class="fc">5日涨幅 7.7</span><span class="fc">123法则 0.0</span><span class="fc" style="color:#00a37a;border-color:#00a37a">资金 -378万</span></div>
-  <ul class="why"><li>距20日高仅0.6%（横盘蓄势临近突破）</li><li>弹性优：近20日平均振幅3.1%（2-4%紧横盘带，越接近4%爆发力越强）</li><li>同花顺主力净流出-378万(无加成)</li></ul>
-  <div class="prow pb"><b>🛒 买入条件</b>回踩EXPMA12(14.74)或5日线(14.89)缩量不破低吸；放量突破今日最高15.52可追（需盘中确认）</div>
-  <div class="prow ps"><b>🛑 止损位</b>买入价-5%(14.74)或跌破EXPMA50(14.51)，二选一先到先执行</div>
-  <div class="prow pt"><b>🎯 目标位</b>第一目标16.76(+8%)；第二目标17.38(+12%)或60日高点15.61附近</div>
-  <div class="prow pi"><b>⛔ 失效条件</b>①跌破EXPMA50且放量 ②主力净流入连续2日转负 ③买入后5个交易日未脱离成本3%%以上</div>
-</div>
-<div class="pick">
-  <div class="phead">
-    <span class="rank">#4</span>
-    <span class="pnm">中航沈飞 <small>600760</small></span>
-    <span class="ptag">备选</span>
-    <span class="pprice" style="color:#e0322f">47.26（+0.30%）成交6.0亿 · 20日振幅2.9%</span>
-  </div>
-  <div class="scorebar"><div class="scorefill" style="width:100%"></div>
-    <span class="scorelabel">综合得分 <b>114.5</b> / 100</span></div>
-  <div class="fchs"><span class="fc">贴近度 100.0</span><span class="fc">弹性 2.9</span><span class="fc">5日涨幅 5.0</span><span class="fc">123法则 0.0</span><span class="fc" style="color:#00a37a;border-color:#00a37a">资金 -210万</span></div>
-  <ul class="why"><li>距20日高仅0.0%（横盘蓄势临近突破）</li><li>弹性优：近20日平均振幅2.9%（2-4%紧横盘带，越接近4%爆发力越强）</li><li>同花顺主力净流出-210万(无加成)</li></ul>
-  <div class="prow pb"><b>🛒 买入条件</b>回踩EXPMA12(45.28)或5日线(45.95)缩量不破低吸；放量突破今日最高47.26可追（需盘中确认）</div>
-  <div class="prow ps"><b>🛑 止损位</b>买入价-5%(44.90)或跌破EXPMA50(44.75)，二选一先到先执行</div>
-  <div class="prow pt"><b>🎯 目标位</b>第一目标51.04(+8%)；第二目标52.93(+12%)或60日高点49.55附近</div>
-  <div class="prow pi"><b>⛔ 失效条件</b>①跌破EXPMA50且放量 ②主力净流入连续2日转负 ③买入后5个交易日未脱离成本3%%以上</div>
-</div>
-<div class="pick">
-  <div class="phead">
-    <span class="rank">#5</span>
-    <span class="pnm">金山办公 <small>688111</small></span>
-    <span class="ptag">备选</span>
-    <span class="pprice" style="color:#e0322f">233.88（+0.88%）成交11.2亿 · 20日振幅2.8%</span>
-  </div>
-  <div class="scorebar"><div class="scorefill" style="width:100%"></div>
-    <span class="scorelabel">综合得分 <b>113.9</b> / 100</span></div>
-  <div class="fchs"><span class="fc">贴近度 99.7</span><span class="fc">弹性 2.8</span><span class="fc">5日涨幅 0.6</span><span class="fc">123法则 0.0</span><span class="fc" style="color:#00a37a;border-color:#00a37a">资金 -6,173万</span></div>
-  <ul class="why"><li>距20日高仅0.3%（横盘蓄势临近突破）</li><li>弹性优：近20日平均振幅2.8%（2-4%紧横盘带，越接近4%爆发力越强）</li><li>同花顺主力净流出-6173万(无加成)</li></ul>
-  <div class="prow pb"><b>🛒 买入条件</b>回踩EXPMA12(229.46)或5日线(231.79)缩量不破低吸；放量突破今日最高233.88可追（需盘中确认）</div>
-  <div class="prow ps"><b>🛑 止损位</b>买入价-5%(222.19)或跌破EXPMA50(234.82)，二选一先到先执行</div>
-  <div class="prow pt"><b>🎯 目标位</b>第一目标252.59(+8%)；第二目标261.95(+12%)或60日高点289.30附近</div>
-  <div class="prow pi"><b>⛔ 失效条件</b>①跌破EXPMA50且放量 ②主力净流入连续2日转负 ③买入后5个交易日未脱离成本3%%以上</div>
-</div></div>
+<div class="sec"><h2>🎯 每日选股 · 候选池</h2><div class="mod">选股结果尚未生成（每个交易日15:45后自动运行）</div></div>
 
-<div class="sec"><h2>🔬 模型回测战绩 <small>（两年真实日线回测 · 验证量化模型是否真能选出超短强势股）</small></h2><div class="btgrid"><div class="btbox"><label>交易笔数</label><b style="color:#2d3436">292 笔</b></div><div class="btbox"><label>胜率</label><b style="color:#e17055">44.2%</b></div><div class="btbox"><label>平均盈利</label><b style="color:#e0322f">+5.42%</b></div><div class="btbox"><label>平均亏损</label><b style="color:#00a37a">-4.20%</b></div><div class="btbox"><label>盈亏比</label><b style="color:#0984e3">1.29</b></div><div class="btbox"><label>单笔期望</label><b style="color:#e0322f">+0.052%</b></div><div class="btbox"><label>组合总收益</label><b style="color:#e0322f">+36.7%</b></div><div class="btbox"><label>基准(流动性等权)</label><b style="color:#636e72">-24.2%</b></div><div class="btbox"><label>最大回撤</label><b style="color:#00a37a">-17.6%</b></div><div class="btbox"><label>平均持仓天数</label><b style="color:#2d3436">4.3 天</b></div><div class="btbox"><label>止损出场占比</label><b style="color:#e17055">26.7%</b></div><div class="btbox"><label>止盈出场占比</label><b style="color:#e0322f">14.4%</b></div></div><div class="btcmp">对照（同规则：等权≤3只/持有5日/止损-5%止盈+8%）：<span class="cmp m">量化模型 <b style="color:#e0322f">+36.7%</b></span><span class="cmp r">随机乱买 <b style="color:#00a37a">-43.0%</b></span><span class="cmp b">流动性等权 <b style="color:#636e72">-24.2%</b></span><span class="cmp sub">随机基线笔数287｜胜率41.5%｜最大回撤-47.6%</span></div><div class="btverdict" style="border-left-color:UP;background:#eaf3fd"><b>诚实结论：</b>✅ 模型跑赢随机基线(-43.0%)与流动性等权基准(-24.2%)，因子组合具备正 alpha，方向成立。（模型 +36.7% ｜ 随机基线 -43.0% ｜ 流动性等权基准 -24.2%，三者同交易规则、同流动性宇宙，可复现对照）</div><div class="btnote">📋 回测口径（诚实声明）：T-1收盘信号,T日收盘成交;等权≤3只;止损-5%/止盈+8%/结构失效(跌破EXPMA50即出,仅模型启用)/5日到期兜底;RS相对强度软打分;随机基线用朴素规则(无结构失效)作无信号alpha底线对照;无资金流历史故回测版无资金因子;固定种子可复现。区间：2025-01-21 ~ 2026-10-20，共419个交易日。回测版因子不含资金流（无历史资金流数据，实时版才有）；未计滑点/停牌/涨跌停无法成交；止损-5%/止盈+8%。随机基线采用同套交易规则、固定随机种子，可复现，用于检验因子是否真有 alpha。历史回测不代表未来收益，用于验证模型逻辑是否成立。</div><table class="btt"><thead><tr><th>买入日</th><th>标的</th><th>买价</th><th>卖价</th><th>收益</th><th>持仓</th><th>出场原因</th></tr></thead><tbody><tr><td>2026-10-13</td><td>九洲药业 603456</td><td>16.60</td><td>16.48</td><td style="color:#00a37a">-0.72%</td><td>5天</td><td>到期</td></tr><tr><td>2026-10-13</td><td>久日新材 688199</td><td>27.39</td><td>26.12</td><td style="color:#00a37a">-4.64%</td><td>5天</td><td>到期</td></tr><tr><td>2026-10-09</td><td>保利发展 600048</td><td>5.65</td><td>5.27</td><td style="color:#00a37a">-6.73%</td><td>5天</td><td>止损</td></tr><tr><td>2026-10-08</td><td>艾德生物 300685</td><td>20.84</td><td>19.57</td><td style="color:#00a37a">-6.09%</td><td>3天</td><td>止损</td></tr><tr><td>2026-09-29</td><td>天能重工 300569</td><td>5.36</td><td>5.45</td><td style="color:#e0322f">+1.68%</td><td>5天</td><td>到期</td></tr><tr><td>2026-09-24</td><td>国邦医药 605507</td><td>18.10</td><td>17.50</td><td style="color:#00a37a">-3.31%</td><td>5天</td><td>到期</td></tr><tr><td>2026-09-29</td><td>五方光电 002962</td><td>14.70</td><td>16.17</td><td style="color:#e0322f">+10.00%</td><td>2天</td><td>止盈</td></tr><tr><td>2026-09-23</td><td>聚灿光电 300708</td><td>9.88</td><td>9.14</td><td style="color:#00a37a">-7.49%</td><td>3天</td><td>止损</td></tr><tr><td>2026-09-22</td><td>普洛药业 000739</td><td>24.00</td><td>26.81</td><td style="color:#e0322f">+11.71%</td><td>4天</td><td>止盈</td></tr><tr><td>2026-09-21</td><td>大连热电 600719</td><td>8.17</td><td>7.59</td><td style="color:#00a37a">-7.10%</td><td>3天</td><td>止损</td></tr><tr><td>2026-09-16</td><td>浙江众成 002522</td><td>5.95</td><td>5.95</td><td style="color:#00a37a">+0.00%</td><td>5天</td><td>到期</td></tr><tr><td>2026-09-15</td><td>中信银行 601998</td><td>8.98</td><td>8.93</td><td style="color:#00a37a">-0.56%</td><td>5天</td><td>到期</td></tr><tr><td>2026-09-14</td><td>洪都航空 600316</td><td>32.68</td><td>32.26</td><td style="color:#00a37a">-1.29%</td><td>5天</td><td>到期</td></tr><tr><td>2026-09-10</td><td>四川美丰 000731</td><td>7.74</td><td>7.26</td><td style="color:#00a37a">-6.20%</td><td>4天</td><td>止损</td></tr><tr><td>2026-09-08</td><td>招商南油 601975</td><td>4.66</td><td>4.58</td><td style="color:#00a37a">-1.72%</td><td>5天</td><td>到期</td></tr></tbody></table></div>
+<div class="sec"><h2>🔬 模型回测战绩 <small>（两年真实日线回测 · 验证量化模型是否真能选出超短强势股）</small></h2><div class="btgrid"><div class="btbox"><label>交易笔数</label><b style="color:#2d3436">292 笔</b></div><div class="btbox"><label>胜率</label><b style="color:#e17055">44.2%</b></div><div class="btbox"><label>平均盈利</label><b style="color:#e0322f">+5.42%</b></div><div class="btbox"><label>平均亏损</label><b style="color:#00a37a">-4.20%</b></div><div class="btbox"><label>盈亏比</label><b style="color:#0984e3">1.29</b></div><div class="btbox"><label>单笔期望</label><b style="color:#e0322f">+0.052%</b></div><div class="btbox"><label>组合总收益</label><b style="color:#e0322f">+36.7%</b></div><div class="btbox"><label>基准(流动性等权)</label><b style="color:#636e72">-24.2%</b></div><div class="btbox"><label>最大回撤</label><b style="color:#00a37a">-17.6%</b></div><div class="btbox"><label>平均持仓天数</label><b style="color:#2d3436">4.3 天</b></div><div class="btbox"><label>止损出场占比</label><b style="color:#e17055">26.7%</b></div><div class="btbox"><label>止盈出场占比</label><b style="color:#e0322f">14.4%</b></div></div><div class="btcmp">对照（同规则：等权≤3只/持有5日/止损-5%止盈+8%）：<span class="cmp m">量化模型 <b style="color:#e0322f">+36.7%</b></span><span class="cmp r">随机乱买 <b style="color:#00a37a">-43.0%</b></span><span class="cmp b">流动性等权 <b style="color:#636e72">-24.2%</b></span><span class="cmp sub">随机基线笔数287｜胜率41.5%｜最大回撤-47.6%</span></div><div class="btverdict" style="border-left-color:UP;background:#eaf3fd"><b>诚实结论：</b>✅ 模型跑赢随机基线(-43.0%)与流动性等权基准(-24.2%)，因子组合具备正 alpha，方向成立。（模型 +36.7% ｜ 随机基线 -43.0% ｜ 流动性等权基准 -24.2%，三者同交易规则、同流动性宇宙，可复现对照）</div><div class="btm4"><b>📊 M4 自身进化（vs M3.5 v3.1 基线）</b><span>最大回撤 <s>-38.7%</s> → <b style="color:#00a37a">-17.6%</b>（砍半✅）</span><span>单笔期望 <s>-0.002%</s> → <b style="color:#e0322f">+0.052%</b>（转正✅）</span><span>组合收益 37.5% → 36.7%（持平，仍跑赢随机）</span><span>胜率 44.6% → 44.2%（持平，框架天花板约44-45%）</span></div><div class="btnote">📋 回测口径（诚实声明）：T-1收盘信号,T日收盘成交;等权≤3只;止损-5%/止盈+8%/结构失效(跌破EXPMA50即出,仅模型启用)/5日到期兜底;RS相对强度软打分;随机基线用朴素规则(无结构失效)作无信号alpha底线对照;无资金流历史故回测版无资金因子;固定种子可复现。区间：2025-01-21 ~ 2026-10-20，共419个交易日。回测版因子不含资金流（无历史资金流数据，实时版才有）；未计滑点/停牌/涨跌停无法成交；止损-5%/止盈+8%。随机基线采用同套交易规则、固定随机种子，可复现，用于检验因子是否真有 alpha。历史回测不代表未来收益，用于验证模型逻辑是否成立。</div><table class="btt"><thead><tr><th>买入日</th><th>标的</th><th>买价</th><th>卖价</th><th>收益</th><th>持仓</th><th>出场原因</th></tr></thead><tbody><tr><td>2026-10-13</td><td>九洲药业 603456</td><td>16.60</td><td>16.48</td><td style="color:#00a37a">-0.72%</td><td>5天</td><td>到期</td></tr><tr><td>2026-10-13</td><td>久日新材 688199</td><td>27.39</td><td>26.12</td><td style="color:#00a37a">-4.64%</td><td>5天</td><td>到期</td></tr><tr><td>2026-10-09</td><td>保利发展 600048</td><td>5.65</td><td>5.27</td><td style="color:#00a37a">-6.73%</td><td>5天</td><td>止损</td></tr><tr><td>2026-10-08</td><td>艾德生物 300685</td><td>20.84</td><td>19.57</td><td style="color:#00a37a">-6.09%</td><td>3天</td><td>止损</td></tr><tr><td>2026-09-29</td><td>天能重工 300569</td><td>5.36</td><td>5.45</td><td style="color:#e0322f">+1.68%</td><td>5天</td><td>到期</td></tr><tr><td>2026-09-24</td><td>国邦医药 605507</td><td>18.10</td><td>17.50</td><td style="color:#00a37a">-3.31%</td><td>5天</td><td>到期</td></tr><tr><td>2026-09-29</td><td>五方光电 002962</td><td>14.70</td><td>16.17</td><td style="color:#e0322f">+10.00%</td><td>2天</td><td>止盈</td></tr><tr><td>2026-09-23</td><td>聚灿光电 300708</td><td>9.88</td><td>9.14</td><td style="color:#00a37a">-7.49%</td><td>3天</td><td>止损</td></tr><tr><td>2026-09-22</td><td>普洛药业 000739</td><td>24.00</td><td>26.81</td><td style="color:#e0322f">+11.71%</td><td>4天</td><td>止盈</td></tr><tr><td>2026-09-21</td><td>大连热电 600719</td><td>8.17</td><td>7.59</td><td style="color:#00a37a">-7.10%</td><td>3天</td><td>止损</td></tr><tr><td>2026-09-16</td><td>浙江众成 002522</td><td>5.95</td><td>5.95</td><td style="color:#00a37a">+0.00%</td><td>5天</td><td>到期</td></tr><tr><td>2026-09-15</td><td>中信银行 601998</td><td>8.98</td><td>8.93</td><td style="color:#00a37a">-0.56%</td><td>5天</td><td>到期</td></tr><tr><td>2026-09-14</td><td>洪都航空 600316</td><td>32.68</td><td>32.26</td><td style="color:#00a37a">-1.29%</td><td>5天</td><td>到期</td></tr><tr><td>2026-09-10</td><td>四川美丰 000731</td><td>7.74</td><td>7.26</td><td style="color:#00a37a">-6.20%</td><td>4天</td><td>止损</td></tr><tr><td>2026-09-08</td><td>招商南油 601975</td><td>4.66</td><td>4.58</td><td style="color:#00a37a">-1.72%</td><td>5天</td><td>到期</td></tr></tbody></table></div>
 
 <div class="ft">
   <h3>📝 修订记录</h3>
-  <ol><li><b>v1.0</b>（2026-10-20）：持仓盯盘页上线：实时行情/盈亏/异动/60秒刷新</li><li><b>v2.0</b>（2026-10-20）：①版本徽章+修订历史+铁律摘要 ②每只显示持仓数 ③原“做T预案”拆分为「分时做T指导」「日线波段指导」「超短交易纪律」三模块 ④新增每日选股候选池板块</li><li><b>v3.0</b>（2026-10-20）：①修复日线因子高低点取数错误（原误用收盘价序列，支撑/压力/123法则失真）②新增「盘后作战指令」模块：明日/未来几日走留判断+具体价位（持仓止损改按成本基准）③分类排版重设计：深色作战总览带+持仓作战区+选股区+回测战绩区 ④关键价位色块条（止损/成本/现价/EXPMA/压力/目标，附距离%）⑤补齐指标：仓位占比/止损距离/目标距离/EXPMA位置/当日振幅/20日平均振幅 ⑥铁律#13「宁做短不做长」落地：选股引擎新增弹性因子（近20日平均振幅，硬门槛2%），权重重构为动量20趋势25量能12位置12形态8弹性13资金10⑦选股区改版：因子分解+资金流呈现；回测战绩区上线（两年真实日线回测）</li><li><b>v3.1</b>（2026-10-20）：【M3.5 模型重做·铁证级诚实结论】①回测v1模型-69.5%跑输随机+98.4%(无流动性门槛虚高)/大盘+23.7%，确认负alpha，已弃用 ②搭建信号实验室signal_lab，6套候选信号对随机基线验真伪，唯一胜出为S3「横盘突破」(低位横盘蓄势+逼近20日新高+无下跌确认) ③修复公平基线：随机/模型/基准统一加成交额>2亿门槛，基准改中位数(防极端日拉爆)，结果模型+37.5%＞随机-43.0%＞流动性等权-24.2%，正alpha成立 ④实时选股selector与回测同口径落地S3，评分在2-4%带内偏好更高弹性(贴合铁律#13)，扫描池扩至500只捕捉中盘突破股 ⑤回测战绩区结论随数据自动翻转：✅模型跑赢随机与基准</li></ol>
+  <ol><li><b>v1.0</b>（2026-10-20）：持仓盯盘页上线：实时行情/盈亏/异动/60秒刷新</li><li><b>v2.0</b>（2026-10-20）：①版本徽章+修订历史+铁律摘要 ②每只显示持仓数 ③原“做T预案”拆分为「分时做T指导」「日线波段指导」「超短交易纪律」三模块 ④新增每日选股候选池板块</li><li><b>v3.0</b>（2026-10-20）：①修复日线因子高低点取数错误（原误用收盘价序列，支撑/压力/123法则失真）②新增「盘后作战指令」模块：明日/未来几日走留判断+具体价位（持仓止损改按成本基准）③分类排版重设计：深色作战总览带+持仓作战区+选股区+回测战绩区 ④关键价位色块条（止损/成本/现价/EXPMA/压力/目标，附距离%）⑤补齐指标：仓位占比/止损距离/目标距离/EXPMA位置/当日振幅/20日平均振幅 ⑥铁律#13「宁做短不做长」落地：选股引擎新增弹性因子（近20日平均振幅，硬门槛2%），权重重构为动量20趋势25量能12位置12形态8弹性13资金10⑦选股区改版：因子分解+资金流呈现；回测战绩区上线（两年真实日线回测）</li><li><b>v3.1</b>（2026-10-20）：【M3.5 模型重做·铁证级诚实结论】①回测v1模型-69.5%跑输随机+98.4%(无流动性门槛虚高)/大盘+23.7%，确认负alpha，已弃用 ②搭建信号实验室signal_lab，6套候选信号对随机基线验真伪，唯一胜出为S3「横盘突破」(低位横盘蓄势+逼近20日新高+无下跌确认) ③修复公平基线：随机/模型/基准统一加成交额>2亿门槛，基准改中位数(防极端日拉爆)，结果模型+37.5%＞随机-43.0%＞流动性等权-24.2%，正alpha成立 ④实时选股selector与回测同口径落地S3，评分在2-4%带内偏好更高弹性(贴合铁律#13)，扫描池扩至500只捕捉中盘突破股 ⑤回测战绩区结论随数据自动翻转：✅模型跑赢随机与基准</li><li><b>v3.2</b>（2026-10-20）：【M4 算法+数据进化·诚实迭代】①数据进化：引入相对强度RS因子（个股20日收益-市场20日收益），实时版用沪深300、回测版用全市场等权指数，作为软打分优先选跑赢大盘的横盘突破股 ②算法进化：新增「结构失效出场」（跌破EXPMA50即出，替代死等5日），亏损更早砍、盈利拿更久 ③回测结论：模型+36.7%仍跑赢随机-43.0%与基准-24.2%（正alpha成立）；自身对比M3.5：最大回撤-38.7%→-17.6%（砍半）、单笔期望-0.002%→+0.052%（转正） ④诚实边界：实验证明该框架胜率天花板约44-45%，硬过滤(regime/放量/RS硬过滤)均降胜率，故M4核心交付为「控回撤+转正期望+数据维度进化」，而非虚假胜率飙升；下一步提胜率需新数据(历史资金流/板块分类/更长周期)或ML集成+walk-forward</li></ol>
   <h3>⚖️ 铁律（项目宪法，13条）</h3>
   <div class="rules2"><ol><li>决策权在你，模型只给依据、禁指令话术</li><li>诚实红线：亏就是亏，禁报喜藏忧</li><li>无依据不出票</li><li>先回测、再模拟盘30天、后实盘</li><li>每票预设数字止损，触发即执行</li><li>计划外交易必须登记</li><li>数据不许猜、不许编</li><li>全部版本化，留修订记录</li><li>财联社任务线隔离不碰</li><li>中线≤2个自然月</li><li>仓位框架不盘中破</li><li>每周复盘闭环</li><li>宁做短不做长：只选超短期弹性优、上涨快的标的（近20日平均振幅≥2%硬门槛）；选不出就不做，绝不放宽标准、绝不为做而做</li></ol></div>
   <h3>🔎 数据口径与读图说明</h3>
