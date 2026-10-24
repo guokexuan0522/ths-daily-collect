@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-10-23 08:26:50",
+  "generated_at": "2026-10-24 01:23:32",
   "market_scanned": 5576,
   "layer1_pool": 500,
   "layer2_scored": 18,
   "data_source": "新浪全市场+新浪日K+同花顺资金流(东财当前403降级)",
-  "elapsed_sec": 489.2,
+  "elapsed_sec": 482.7,
   "picks": [
     {
       "rank": 1,
@@ -41,7 +41,7 @@
       "code": "688235",
       "name": "百济神州",
       "price": 277.82,
-      "chg": 4.957,
+      "chg": 4.949,
       "score": 129.1,
       "factors": {
         "贴近度": 99.4,
@@ -70,7 +70,7 @@
       "code": "300012",
       "name": "华测检测",
       "price": 15.97,
-      "chg": 6.894,
+      "chg": 6.827,
       "score": 127.7,
       "factors": {
         "贴近度": 99.8,
@@ -99,7 +99,7 @@
       "code": "688111",
       "name": "金山办公",
       "price": 248.96,
-      "chg": 5.1,
+      "chg": 5.095,
       "score": 125.6,
       "factors": {
         "贴近度": 99.4,
