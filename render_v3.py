@@ -16,8 +16,9 @@ from pathlib import Path
 DIR = Path(__file__).resolve().parent
 PICKS_FILE = DIR / "picks.json"
 BT_FILE = DIR / "backtest.json"
+TRACK_FILE = DIR / "picks_history.jsonl"   # 每日选股入池登记（实时追踪流水，v3.3 新增）
 
-VERSION = "v3.2"
+VERSION = "v3.3"
 UP = "#e0322f"        # 红=涨/盈利
 DOWN = "#00a37a"      # 绿=跌/亏损
 BLUE = "#0984e3"
@@ -48,6 +49,12 @@ REVISION_LOG = [
      "（正alpha成立）；自身对比M3.5：最大回撤-38.7%→-17.6%（砍半）、单笔期望-0.002%→+0.052%（转正） ④诚实边界："
      "实验证明该框架胜率天花板约44-45%，硬过滤(regime/放量/RS硬过滤)均降胜率，故M4核心交付为「控回撤+转正期望+数据维度进化」，"
      "而非虚假胜率飙升；下一步提胜率需新数据(历史资金流/板块分类/更长周期)或ML集成+walk-forward"),
+    ("v3.3", "2026-10-24", "【选股战绩追踪·回应'看不到股票到底行不行'】①新增「🏆选股战绩追踪」模块："
+     "个股战绩徽章(每只候选股标注历史入选次数/胜负/累计收益，首入池标🆕开始追踪)+动态仪表盘(实时胜率/"
+     "平均单笔/累计收益/最大最小单笔/今日新入池)+内联SVG收益曲线+每日选股战绩明细表 ②建立picks_history.jsonl"
+     "每日选股入池登记(幂等去重)：实时追踪自今日起、K线刷新后自动结算5日战绩 ③战绩种子取自回测样本"
+     "(同规则止损-5%/止盈+8%/5日到期)，诚实标注回测≠未来 ④position.html用轻量内联SVG画曲线(60秒刷新页"
+     "不宜内嵌1MB ECharts，保持单文件离线可用)；index.html客户展示页继续用内嵌ECharts"),
 ]
 
 RULES = [
@@ -229,6 +236,7 @@ def build_picks():
              % (picks["generated_at"], picks["market_scanned"], picks["layer1_pool"],
                 picks["layer2_scored"], picks["elapsed_sec"], len(picks["picks"]),
                 sum(1 for p in picks["picks"] if p["primary"]), picks["data_source"]))
+    by_code = _track_data()["by_code"]
     for p in picks["picks"]:
         tag = "★主推" if p["primary"] else "备选"
         reasons = "".join("<li>%s</li>" % x for x in p["reasons"])
@@ -244,6 +252,22 @@ def build_picks():
         score_pct = min(p["score"], 100)
         cls = "pick primary" if p["primary"] else "pick"
         c = UP if p["chg"] >= 0 else DOWN
+        # v3.3 个股战绩徽章：回答"这只票模型历史上选中后到底行不行"
+        rec = by_code.get(p["code"])
+        if rec and rec.get("n", 0) > 0:
+            badge = ('<div class="pbadge"><b>📊 个股战绩</b>历史入选 <b>%d</b> 次 · '
+                     '<b style="color:%s">%d胜%d负</b> · 累计 '
+                     '<b style="color:%s">%+.1f%%</b> · 上次(%s) <b style="color:%s">%+.1f%%</b></div>'
+                     % (rec["n"], UP if rec["win"] >= rec["loss"] else DOWN,
+                        rec["win"], rec["loss"], UP if rec["cum"] > 0 else DOWN, rec["cum"],
+                        rec["last_date"] or "-", UP if (rec["last_ret"] or 0) > 0 else DOWN,
+                        rec["last_ret"] or 0))
+        elif rec and rec.get("live_pending"):
+            badge = ('<div class="pbadge new"><b>🆕 个股战绩</b>今日首次入池 · '
+                     '开始追踪（K线刷新后5日自动结算战绩）</div>')
+        else:
+            badge = ('<div class="pbadge new"><b>🆕 个股战绩</b>首次入选 · '
+                     '开始追踪（K线刷新后5日自动结算战绩）</div>')
         html += """
 <div class="%(cls)s">
   <div class="phead">
@@ -256,6 +280,7 @@ def build_picks():
     <span class="scorelabel">综合得分 <b>%(score).1f</b> / 100</span></div>
   <div class="fchs">%(fac_chips)s</div>
   <ul class="why">%(reasons)s</ul>
+  %(badge)s
   <div class="prow pb"><b>🛒 买入条件</b>%(buy)s</div>
   <div class="prow ps"><b>🛑 止损位</b>%(stop)s</div>
   <div class="prow pt"><b>🎯 目标位</b>%(target)s</div>
@@ -265,7 +290,7 @@ def build_picks():
             "chg": p["chg"], "amt": p["amount_yi"], "amp": p.get("amp20") or 0,
             "spct": score_pct, "score": p["score"], "fac_chips": fac_chips,
             "reasons": reasons, "buy": p["buy"], "stop": p["stop"],
-            "target": p["target"], "invalid": p["invalid"]}
+            "target": p["target"], "invalid": p["invalid"], "badge": badge}
     html += "</div>"
     return html
 
@@ -355,10 +380,192 @@ def build_backtest():
             % (boxes, rbox, verdict, m4_cmp, bt.get("assumptions", ""), m["区间"], m["交易日数"], table))
 
 
+def sync_pick_history():
+    """把今日选股追加到 picks_history.jsonl（幂等：按 date+code 去重）。
+    实时追踪自今日起登记；K线数据(history.npz)刷新到覆盖入选日后自动结算5日战绩。"""
+    try:
+        pj = json.loads(PICKS_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return
+    picks = pj.get("picks", [])
+    if not picks:
+        return
+    date = (pj.get("generated_at") or "")[:10]
+    existing = set()
+    if TRACK_FILE.exists():
+        for line in TRACK_FILE.read_text(encoding="utf-8").splitlines():
+            try:
+                r = json.loads(line)
+                existing.add((r.get("date"), r.get("code")))
+            except Exception:
+                pass
+    new = []
+    for p in picks:
+        if (date, p["code"]) in existing:
+            continue
+        new.append({"date": date, "code": p["code"], "name": p["name"],
+                    "primary": bool(p.get("primary")), "entry": p["price"],
+                    "score": p.get("score"), "status": "待结算",
+                    "note": "入池登记，K线刷新后自动结算5日战绩"})
+    if new:
+        with open(TRACK_FILE, "a", encoding="utf-8") as f:
+            for rec in new:
+                f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+
+
+def _read_pick_history():
+    out = []
+    if TRACK_FILE.exists():
+        for line in TRACK_FILE.read_text(encoding="utf-8").splitlines():
+            try:
+                out.append(json.loads(line))
+            except Exception:
+                pass
+    return out
+
+
+def _track_data():
+    """聚合回测 trades(历史战绩种子) + picks_history(实时追踪) → 战绩追踪数据。
+    个股 by_code 索引、近20笔战绩、总体统计、收益曲线。"""
+    trades, equity, m = [], [], {}
+    try:
+        bt = json.loads(BT_FILE.read_text(encoding="utf-8"))
+        trades = bt.get("trades", [])
+        equity = bt.get("equity_curve", [])
+        m = bt.get("metrics", {})
+    except Exception:
+        pass
+    live = _read_pick_history()
+    # 个股战绩索引（历史回测样本）
+    by_code = {}
+    for t in trades:
+        c = by_code.setdefault(t["code"], {"code": t["code"], "name": t["name"], "n": 0,
+                                           "win": 0, "loss": 0, "cum": 0.0,
+                                           "last_date": None, "last_ret": None})
+        c["n"] += 1
+        c["cum"] += t["ret_pct"]
+        if t["ret_pct"] > 0:
+            c["win"] += 1
+        else:
+            c["loss"] += 1
+        if c["last_date"] is None or t.get("buy_date", "") >= c["last_date"]:
+            c["last_date"] = t.get("buy_date", "")
+            c["last_ret"] = t["ret_pct"]
+    # 实时追踪：为今日/近几日新入池但回测样本中没有的 code 建索引（标记 live_pending）
+    for r in live:
+        c = by_code.setdefault(r["code"], {"code": r["code"], "name": r["name"], "n": 0,
+                                           "win": 0, "loss": 0, "cum": 0.0,
+                                           "last_date": None, "last_ret": None})
+        c["live_pending"] = c.get("live_pending", 0) + 1
+    # 近 20 笔战绩（按买入日倒序）
+    recent = sorted(trades, key=lambda t: t.get("buy_date", ""), reverse=True)[:20]
+    # 总体统计（已收官 = 回测样本全部）
+    wins = [t for t in trades if t["ret_pct"] > 0]
+    stats = {
+        "total": len(trades), "win": len(wins), "loss": len(trades) - len(wins),
+        "winrate": (len(wins) / len(trades) * 100) if trades else 0,
+        "avg": (sum(t["ret_pct"] for t in trades) / len(trades)) if trades else 0,
+        "cum": sum(t["ret_pct"] for t in trades),
+        "best": max((t["ret_pct"] for t in trades), default=0.0),
+        "worst": min((t["ret_pct"] for t in trades), default=0.0),
+        "open_live": len(live),
+    }
+    return {"by_code": by_code, "recent": recent, "stats": stats,
+            "equity": equity, "live": live, "metrics": m}
+
+
+def _equity_svg(equity):
+    """内联 SVG 收益曲线（自包含、无外部依赖；position.html 为 60 秒刷新页，不内嵌 ECharts）。"""
+    if not equity or len(equity) < 2:
+        return ""
+    W, H = 100.0, 100.0
+    lo, hi = min(equity), max(equity)
+    rng = (hi - lo) or 1.0
+    pts = []
+    n = len(equity)
+    for i, v in enumerate(equity):
+        x = i / (n - 1) * W
+        y = H - (v - lo) / rng * H
+        pts.append("%.1f,%.1f" % (x, y))
+    base_y = H - (1.0 - lo) / rng * H  # 本金基准线 y=1.0
+    up = equity[-1] >= equity[0]
+    color = UP if up else DOWN
+    return ('<svg viewBox="0 0 %g %g" preserveAspectRatio="none" class="eqsvg">'
+            '<line x1="0" y1="%.1f" x2="%g" y2="%.1f" stroke="#b2bec3" stroke-width="0.4" '
+            'stroke-dasharray="2 2"/>'
+            '<polyline points="%s" fill="none" stroke="%s" stroke-width="1.6" '
+            'stroke-linejoin="round"/></svg>'
+            % (W, H, base_y, W, base_y, " ".join(pts), color))
+
+
+def build_track():
+    """v3.3 选股战绩追踪：动态仪表盘 + SVG 收益曲线 + 今日入池登记 + 近期选股战绩明细。"""
+    track = _track_data()
+    st, recent, live = track["stats"], track["recent"], track["live"]
+    m = track["metrics"]
+    head = ('<div class="sec"><h2>🏆 选股战绩追踪 <small>（模型选股 → 实际走势 → 动态胜率，'
+            '每日更新；回答"每只票到底行不行、模型胜率多少"）</small></h2>')
+    cards = [
+        ("追踪选股", "%d 只" % (st["total"] + st["open_live"]), None),
+        ("已收官(5日)", "%d 笔" % st["total"], None),
+        ("实时胜率", "%.1f%%" % st["winrate"], BLUE if st["winrate"] >= 45 else ORANGE),
+        ("平均单笔", "%+.2f%%" % st["avg"], UP if st["avg"] > 0 else DOWN),
+        ("累计收益", "%+.1f%%" % st["cum"], UP if st["cum"] > 0 else DOWN),
+        ("最大单笔", "%+.1f%%" % st["best"], UP),
+        ("最差单笔", "%+.1f%%" % st["worst"], DOWN),
+        ("今日新入池", "%d 只" % st["open_live"], BLUE),
+    ]
+    boxes = "".join('<div class="btbox"><label>%s</label><b style="color:%s">%s</b></div>'
+                    % (k, c or "#2d3436", v) for k, v, c in cards)
+    # 收益曲线
+    eq = _equity_svg(track["equity"])
+    curve = ""
+    if eq:
+        rng = m.get("区间", "")
+        curve = ('<div class="eqwrap"><div class="eqtitle">累计收益曲线'
+                 '（本金=1.0 基准线，采样自回测样本；区间 %s）</div>%s</div>' % (rng, eq))
+    # 今日新入池登记
+    live_rows = ""
+    today_live = sorted(live, key=lambda r: r.get("date", ""), reverse=True)[:8]
+    if today_live:
+        rows = "".join(
+            '<tr><td>%s</td><td>%s %s</td><td>%.2f</td><td>%s</td>'
+            '<td style="color:%s">%s</td></tr>'
+            % (r.get("date", ""), r.get("name", ""), r.get("code", ""), r.get("entry", 0),
+               "★主推" if r.get("primary") else "备选", BLUE, r.get("status", "待结算"))
+            for r in today_live)
+        live_rows = ('<div class="eqtitle">🆕 今日/近期新入池（已登记，K线刷新后自动结算5日战绩）</div>'
+                     '<table class="btt"><thead><tr><th>入选日</th><th>标的</th><th>入选价</th>'
+                     '<th>类型</th><th>状态</th></tr></thead><tbody>%s</tbody></table>' % rows)
+    # 近期选股战绩明细（回测样本近20笔）
+    table = ""
+    if recent:
+        rows = "".join(
+            '<tr><td>%s</td><td>%s %s</td><td>%.2f</td><td>%.2f</td>'
+            '<td style="color:%s"><b>%+.2f%%</b></td><td style="color:%s">%s</td>'
+            '<td>%s</td><td>%d天</td></tr>'
+            % (t["buy_date"], t["name"], t["code"], t["buy"], t["sell"],
+               UP if t["ret_pct"] > 0 else DOWN, t["ret_pct"],
+               UP if t["ret_pct"] > 0 else DOWN, "✅胜" if t["ret_pct"] > 0 else "❌负",
+               t["reason"], t["days"]) for t in recent)
+        table = ('<div class="eqtitle">📋 近期选股战绩（回测样本，近%d笔，按买入日倒序）</div>'
+                 '<table class="btt"><thead><tr><th>入选日</th><th>标的</th><th>入选价</th>'
+                 '<th>出场价</th><th>收益</th><th>结果</th><th>出场原因</th><th>持仓</th></tr></thead>'
+                 "<tbody>%s</tbody></table>" % (len(recent), rows))
+    note = ('<div class="btnote">📋 战绩口径（诚实声明）：仪表盘/曲线/明细的战绩种子取自两年回测样本'
+            '（同规则：T-1收盘信号、T日收盘成交、止损-5%/止盈+8%/5日到期/结构失效出场），'
+            '个股徽章为该股历史被模型选中后的累计表现；"今日新入池"为实时登记，需等K线数据刷新到覆盖入选日'
+            '后自动结算5日战绩。<b>回测战绩不代表未来收益，用于验证模型逻辑是否成立；胜率天花板约44-45%'
+            '（框架特性，靠频率+纪律+控回撤取胜，非靠高胜率）。</b></div>')
+    return (head + '<div class="btgrid">%s</div>%s%s%s%s</div>'
+            % (boxes, curve, live_rows, table, note))
+
+
 def render(rows=None):
     if rows is None:
         import pos_watch
         rows = pos_watch.build_rows()
+    sync_pick_history()  # v3.3 维护每日选股入池登记（幂等去重）
     tot_mv = sum(r["mv"] for r in rows)
     tot_cost = sum(r["cost_mv"] for r in rows)
     tot_pl = tot_mv - tot_cost
@@ -369,6 +576,7 @@ def render(rows=None):
 
     cards = "".join(build_card(r, tot_mv) for r in rows)
     pick_html = build_picks()
+    track_html = build_track()
     bt_html = build_backtest()
     rev_html = "".join('<li><b>%s</b>（%s）：%s</li>' % r for r in REVISION_LOG)
     rules_html = "".join("<li>%s</li>" % r for r in RULES)
@@ -511,6 +719,13 @@ a{color:#74b9ff;text-decoration:none}
 .btm4>b{color:#00a37a;display:block;width:100%;margin-bottom:2px}
 .btm4 span{background:#fff;border:1px solid #dfe6e9;border-radius:8px;padding:3px 9px}
 .btm4 s{color:#b2bec3;text-decoration:line-through;margin-right:3px}
+/* ===== 选股战绩追踪(v3.3) ===== */
+.eqwrap{margin:10px 0}
+.eqtitle{font-size:12px;color:#636e72;font-weight:700;margin:10px 0 4px}
+.eqsvg{width:100%;height:120px;background:#f7f8fa;border:1px solid #eef0f4;border-radius:10px}
+.pbadge{font-size:12.5px;background:#f0edfd;border-left:3px solid #6c5ce7;border-radius:0 8px 8px 0;padding:6px 10px;margin:4px 0 6px;line-height:1.6}
+.pbadge.new{background:#fff8e1;border-left-color:#e17055}
+.pbadge b{color:#2d3436}
 /* ===== 页脚 ===== */
 .ft{background:#fff;border-radius:12px;padding:14px;margin:14px 0;font-size:12px;color:#636e72;line-height:1.9;box-shadow:0 1px 3px rgba(0,0,0,.06)}
 .ft h3{font-size:13px;color:#2d3436;margin-bottom:6px}
@@ -547,6 +762,8 @@ a{color:#74b9ff;text-decoration:none}
 
 __PICKS__
 
+__TRACK__
+
 __BT__
 
 <div class="ft">
@@ -582,10 +799,12 @@ __BT__
             .replace("__TOPPICK__", top_pick)
             .replace("__CARDS__", cards)
             .replace("__PICKS__", pick_html)
+            .replace("__TRACK__", track_html)
             .replace("__BT__", bt_html)
             .replace("__REV__", rev_html)
             .replace("__RULES__", rules_html))
     (DIR / "position.html").write_text(html, encoding="utf-8")
+    (DIR / "index.html").write_text(html, encoding="utf-8")  # v3.3 GitHub Pages 首页同步（与持仓页同源）
     (DIR / "index.html").write_text(html, encoding="utf-8")
     return tot_pl
 
