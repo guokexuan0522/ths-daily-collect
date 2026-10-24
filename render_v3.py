@@ -502,15 +502,16 @@ def build_track():
     """v3.3 选股战绩追踪：动态仪表盘 + SVG 收益曲线 + 今日入池登记 + 近期选股战绩明细。"""
     track = _track_data()
     st, recent, live = track["stats"], track["recent"], track["live"]
+    by_code = track["by_code"]
     m = track["metrics"]
     head = ('<div class="sec"><h2>🏆 选股战绩追踪 <small>（模型选股 → 实际走势 → 动态胜率，'
             '每日更新；回答"每只票到底行不行、模型胜率多少"）</small></h2>')
     cards = [
-        ("追踪选股", "%d 只" % (st["total"] + st["open_live"]), None),
-        ("已收官(5日)", "%d 笔" % st["total"], None),
-        ("实时胜率", "%.1f%%" % st["winrate"], BLUE if st["winrate"] >= 45 else ORANGE),
+        ("回测样本", "%d 笔" % st["total"], None),
+        ("涉及个股", "%d 只" % len(by_code), None),
+        ("胜率", "%.1f%%" % st["winrate"], BLUE if st["winrate"] >= 45 else ORANGE),
         ("平均单笔", "%+.2f%%" % st["avg"], UP if st["avg"] > 0 else DOWN),
-        ("累计收益", "%+.1f%%" % st["cum"], UP if st["cum"] > 0 else DOWN),
+        ("累计收益", "%+.1f%%" % m.get("组合总收益%", 0), UP if m.get("组合总收益%", 0) > 0 else DOWN),
         ("最大单笔", "%+.1f%%" % st["best"], UP),
         ("最差单笔", "%+.1f%%" % st["worst"], DOWN),
         ("今日新入池", "%d 只" % st["open_live"], BLUE),
@@ -555,7 +556,8 @@ def build_track():
     note = ('<div class="btnote">📋 战绩口径（诚实声明）：仪表盘/曲线/明细的战绩种子取自两年回测样本'
             '（同规则：T-1收盘信号、T日收盘成交、止损-5%/止盈+8%/5日到期/结构失效出场），'
             '个股徽章为该股历史被模型选中后的累计表现；"今日新入池"为实时登记，需等K线数据刷新到覆盖入选日'
-            '后自动结算5日战绩。<b>回测战绩不代表未来收益，用于验证模型逻辑是否成立；胜率天花板约44-45%'
+            '后自动结算5日战绩。当前胜率/累计收益为回测样本口径，随每日入池结算将逐步转为实时口径。'
+            '<b>回测战绩不代表未来收益，用于验证模型逻辑是否成立；胜率天花板约44-45%'
             '（框架特性，靠频率+纪律+控回撤取胜，非靠高胜率）。</b></div>')
     return (head + '<div class="btgrid">%s</div>%s%s%s%s</div>'
             % (boxes, curve, live_rows, table, note))
