@@ -18,7 +18,7 @@ PICKS_FILE = DIR / "picks.json"
 BT_FILE = DIR / "backtest.json"
 TRACK_FILE = DIR / "picks_history.jsonl"   # 每日选股入池登记（实时追踪流水，v3.3 新增）
 
-VERSION = "v3.3"
+VERSION = "v3.4"
 UP = "#e0322f"        # 红=涨/盈利
 DOWN = "#00a37a"      # 绿=跌/亏损
 BLUE = "#0984e3"
@@ -54,7 +54,11 @@ REVISION_LOG = [
      "平均单笔/累计收益/最大最小单笔/今日新入池)+内联SVG收益曲线+每日选股战绩明细表 ②建立picks_history.jsonl"
      "每日选股入池登记(幂等去重)：实时追踪自今日起、K线刷新后自动结算5日战绩 ③战绩种子取自回测样本"
      "(同规则止损-5%/止盈+8%/5日到期)，诚实标注回测≠未来 ④position.html用轻量内联SVG画曲线(60秒刷新页"
-     "不宜内嵌1MB ECharts，保持单文件离线可用)；index.html客户展示页继续用内嵌ECharts"),
+     "不宜内嵌1MB ECharts，保持单文件离线可用）；index.html客户展示页继续用内嵌ECharts"),
+    ("v3.4", "2026-10-26", "【入池战绩·T+1真实可执行口径】①候选池卡片+新入池表新增「当前股价」与「入池以来收益率」："
+     "当前股价取腾讯实时行情；收益率按盘后可执行口径——入池当日不可买，T+1(下一交易日)开盘建仓，自T+1起算持仓"
+     "天数与收益，未到T+1标'待T+1建仓'(并给预计T+1日期) ②新增market推断+新浪带日期日K拉取+腾讯批量行情，"
+     "render时批量补全(每code一次请求) ③候选池卡片附'较入选价'参考涨跌(非T+1口径，仅感知用，明确标注'参考')"),
 ]
 
 RULES = [
@@ -220,7 +224,7 @@ def build_card(r, tot_mv):
     }
 
 
-def build_picks():
+def build_picks(perf=None):
     if not PICKS_FILE.exists():
         return '<div class="sec"><h2>🎯 每日选股 · 候选池</h2><div class="mod">选股结果尚未生成（每个交易日15:45后自动运行）</div></div>'
     try:
@@ -237,6 +241,9 @@ def build_picks():
                 picks["layer2_scored"], picks["elapsed_sec"], len(picks["picks"]),
                 sum(1 for p in picks["picks"] if p["primary"]), picks["data_source"]))
     by_code = _track_data()["by_code"]
+    if perf is None:
+        perf = _compute_perf()
+    entry_date = (picks.get("generated_at") or "")[:10]
     for p in picks["picks"]:
         tag = "★主推" if p["primary"] else "备选"
         reasons = "".join("<li>%s</li>" % x for x in p["reasons"])
@@ -268,6 +275,9 @@ def build_picks():
         else:
             badge = ('<div class="pbadge new"><b>🆕 个股战绩</b>首次入选 · '
                      '开始追踪（K线刷新后5日自动结算战绩）</div>')
+        # v3.4 当前股价 + 入池以来收益率（T+1口径：盘后入池当日不可买）
+        pf = _perf_for(p["code"], entry_date, perf["cur"], perf["kline"])
+        live_line = _render_perf_line(pf, p["price"])
         html += """
 <div class="%(cls)s">
   <div class="phead">
@@ -281,6 +291,7 @@ def build_picks():
   <div class="fchs">%(fac_chips)s</div>
   <ul class="why">%(reasons)s</ul>
   %(badge)s
+  %(live_line)s
   <div class="prow pb"><b>🛒 买入条件</b>%(buy)s</div>
   <div class="prow ps"><b>🛑 止损位</b>%(stop)s</div>
   <div class="prow pt"><b>🎯 目标位</b>%(target)s</div>
@@ -290,7 +301,7 @@ def build_picks():
             "chg": p["chg"], "amt": p["amount_yi"], "amp": p.get("amp20") or 0,
             "spct": score_pct, "score": p["score"], "fac_chips": fac_chips,
             "reasons": reasons, "buy": p["buy"], "stop": p["stop"],
-            "target": p["target"], "invalid": p["invalid"], "badge": badge}
+            "target": p["target"], "invalid": p["invalid"], "badge": badge, "live_line": live_line}
     html += "</div>"
     return html
 
@@ -498,19 +509,139 @@ def _equity_svg(equity):
             % (W, H, base_y, W, base_y, " ".join(pts), color))
 
 
-def build_track():
+def _market_of(code):
+    if code.startswith("6"):
+        return "sh"
+    if code.startswith("0") or code.startswith("3"):
+        return "sz"
+    if code.startswith("8") or code.startswith("4"):
+        return "bj"
+    return "sz"
+
+
+def _next_trading_day(d):
+    """估算下一交易日（跳过周末；未计法定节假日，页面标注"预计"）。"""
+    try:
+        from datetime import date, timedelta
+        y, m, dd = (int(x) for x in d.split("-"))
+        cur = date(y, m, dd) + timedelta(days=1)
+        while cur.weekday() >= 5:
+            cur += timedelta(days=1)
+        return cur.isoformat()
+    except Exception:
+        return None
+
+
+def _fetch_kline_dated(code, market, datalen=75):
+    """新浪日K（带日期）。返回 [(day, open, high, low, close, volume)]，day='YYYY-MM-DD'。"""
+    import urllib.request
+    sym = "%s%s" % (market, code)
+    url = ("https://money.finance.sina.com.cn/quotes_service/api/json_v2.php/"
+           "CN_MarketData.getKLineData?symbol=%s&scale=240&ma=no&datalen=%d" % (sym, datalen))
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0",
+                                                   "Referer": "https://finance.sina.com.cn/"})
+        with urllib.request.urlopen(req, timeout=12) as r:
+            data = json.loads(r.read().decode())
+        return [(str(x["day"]), float(x["open"]), float(x["high"]), float(x["low"]),
+                 float(x["close"]), float(x["volume"])) for x in data]
+    except Exception:
+        return []
+
+
+def _compute_perf():
+    """为候选池+入池记录批量拉实时行情与带日期日K（行情批量1次、日K每code一次）。返回 {cur, kline}。"""
+    codes = set()
+    try:
+        pj = json.loads(PICKS_FILE.read_text(encoding="utf-8"))
+        for p in pj.get("picks", []):
+            codes.add(p["code"])
+    except Exception:
+        pass
+    for r in _read_pick_history():
+        if r.get("code"):
+            codes.add(r["code"])
+    cur, kline = {}, {}
+    if not codes:
+        return {"cur": cur, "kline": kline}
+    try:
+        import pos_watch
+        q = pos_watch.fetch_quotes(["%s%s" % (_market_of(c), c) for c in codes])
+        for c in codes:
+            cur[c] = (q.get(c) or {}).get("price")
+    except Exception:
+        pass
+    for c in codes:
+        try:
+            kline[c] = _fetch_kline_dated(c, _market_of(c))
+        except Exception:
+            kline[c] = []
+        time.sleep(0.25)
+    return {"cur": cur, "kline": kline}
+
+
+def _perf_for(code, entry_date, cur, kline):
+    """T+1 口径个股入池战绩：盘后入池当日不可买，T+1(下一交易日)开盘建仓，自 T+1 起算持仓与收益。
+    返回 {cur, built, ret, hold, base, t1_day, t1_expect}。"""
+    kl = kline.get(code) or []
+    cur_px = cur.get(code)
+    out = {"cur": cur_px}
+    days = [k[0] for k in kl]
+    if entry_date in days:
+        i = days.index(entry_date)
+        if i + 1 < len(kl):
+            t1 = kl[i + 1]
+            base = t1[1]  # T+1 开盘价建仓
+            hold = len(kl) - (i + 1)  # 自 T+1 至最新的交易日数
+            ret = (cur_px / base - 1) * 100 if (cur_px and base) else None
+            out.update({"built": True, "t1_day": t1[0], "base": base, "ret": ret, "hold": hold})
+            return out
+        out.update({"built": False, "t1_expect": _next_trading_day(entry_date)})
+        return out
+    out.update({"built": False, "t1_expect": _next_trading_day(entry_date)})
+    return out
+
+
+def _render_perf_line(pf, entry_px):
+    """候选池卡片的『当前股价 + 入池以来收益率』行（T+1口径，未到T+1标待建仓）。"""
+    cur = pf.get("cur")
+    if cur is None:
+        return '<div class="pbadge live">📈 当前股价：数据获取中…</div>'
+    vs = (cur / entry_px - 1) * 100 if entry_px else 0.0
+    vsc = UP if vs >= 0 else DOWN
+    if pf.get("built"):
+        ret = pf.get("ret") or 0.0
+        rc = UP if ret > 0 else (DOWN if ret < 0 else "#2d3436")
+        return ('<div class="pbadge live">📈 当前股价 <b>%.2f</b>'
+                '（较入选价 <b style="color:%s">%+.1f%%</b>，参考）｜'
+                '入池以来收益率 <b style="color:%s">%+.1f%%</b>'
+                '（T+1 %s 开盘 %.2f 建仓 · 持仓 %d 日）</div>'
+                % (cur, vsc, vs, rc, ret, pf.get("t1_day", "-"),
+                   pf.get("base") or 0, pf.get("hold") or 0))
+    t1 = pf.get("t1_expect")
+    tip = ("，预计 T+1（%s）开盘建仓" % (t1[5:] if t1 else "下一交易日"))
+    return ('<div class="pbadge live">📈 当前股价 <b>%.2f</b>'
+            '（较入选价 <b style="color:%s">%+.1f%%</b>，参考）｜'
+            '入池以来收益率：<b>待 T+1 建仓</b>（盘后入池当日不可买%s）</div>'
+            % (cur, vsc, vs, tip))
+
+
+def build_track(perf=None):
     """v3.3 选股战绩追踪：动态仪表盘 + SVG 收益曲线 + 今日入池登记 + 近期选股战绩明细。"""
+    if perf is None:
+        perf = _compute_perf()
     track = _track_data()
     st, recent, live = track["stats"], track["recent"], track["live"]
+    by_code = track["by_code"]
     m = track["metrics"]
     head = ('<div class="sec"><h2>🏆 选股战绩追踪 <small>（模型选股 → 实际走势 → 动态胜率，'
             '每日更新；回答"每只票到底行不行、模型胜率多少"）</small></h2>')
     cards = [
-        ("追踪选股", "%d 只" % (st["total"] + st["open_live"]), None),
-        ("已收官(5日)", "%d 笔" % st["total"], None),
-        ("实时胜率", "%.1f%%" % st["winrate"], BLUE if st["winrate"] >= 45 else ORANGE),
+        ("回测样本", "%d 笔" % st["total"], None),
+        ("涉及个股", "%d 只" % len(by_code), None),
+        ("胜率", "%.1f%%" % st["winrate"], BLUE if st["winrate"] >= 45 else ORANGE),
         ("平均单笔", "%+.2f%%" % st["avg"], UP if st["avg"] > 0 else DOWN),
-        ("累计收益", "%+.1f%%" % st["cum"], UP if st["cum"] > 0 else DOWN),
+        ("累计收益", "%+.1f%%" % m.get("组合总收益%", 0), UP if m.get("组合总收益%", 0) > 0 else DOWN),
         ("最大单笔", "%+.1f%%" % st["best"], UP),
         ("最差单笔", "%+.1f%%" % st["worst"], DOWN),
         ("今日新入池", "%d 只" % st["open_live"], BLUE),
@@ -528,15 +659,29 @@ def build_track():
     live_rows = ""
     today_live = sorted(live, key=lambda r: r.get("date", ""), reverse=True)[:8]
     if today_live:
-        rows = "".join(
-            '<tr><td>%s</td><td>%s %s</td><td>%.2f</td><td>%s</td>'
-            '<td style="color:%s">%s</td></tr>'
-            % (r.get("date", ""), r.get("name", ""), r.get("code", ""), r.get("entry", 0),
-               "★主推" if r.get("primary") else "备选", BLUE, r.get("status", "待结算"))
-            for r in today_live)
-        live_rows = ('<div class="eqtitle">🆕 今日/近期新入池（已登记，K线刷新后自动结算5日战绩）</div>'
+        rows = ""
+        for r in today_live:
+            pf = _perf_for(r.get("code", ""), r.get("date", ""), perf["cur"], perf["kline"])
+            cur = pf.get("cur")
+            cur_s = "%.2f" % cur if cur else "-"
+            if pf.get("built"):
+                ret = pf.get("ret") or 0.0
+                rc = UP if ret > 0 else (DOWN if ret < 0 else "#2d3436")
+                ret_s = '<b style="color:%s">%+.1f%%</b>' % (rc, ret)
+                st_s = "持仓%d日" % (pf.get("hold") or 0)
+            else:
+                ret_s = '<span style="color:%s">待T+1建仓</span>' % BLUE
+                st_s = "待结算"
+            rows += ('<tr><td>%s</td><td>%s %s</td><td>%.2f</td><td>%s</td>'
+                     '<td>%s</td><td>%s</td><td>%s</td></tr>'
+                     % (r.get("date", ""), r.get("name", ""), r.get("code", ""),
+                        r.get("entry", 0), "★主推" if r.get("primary") else "备选",
+                        cur_s, ret_s, st_s))
+        live_rows = ('<div class="eqtitle">🆕 今日/近期新入池（盘后入池当日不可买，T+1开盘建仓起算；'
+                     'K线刷新后自动结算）</div>'
                      '<table class="btt"><thead><tr><th>入选日</th><th>标的</th><th>入选价</th>'
-                     '<th>类型</th><th>状态</th></tr></thead><tbody>%s</tbody></table>' % rows)
+                     '<th>类型</th><th>当前股价</th><th>入池以来收益率</th><th>状态</th></tr></thead>'
+                     '<tbody>%s</tbody></table>' % rows)
     # 近期选股战绩明细（回测样本近20笔）
     table = ""
     if recent:
@@ -555,7 +700,8 @@ def build_track():
     note = ('<div class="btnote">📋 战绩口径（诚实声明）：仪表盘/曲线/明细的战绩种子取自两年回测样本'
             '（同规则：T-1收盘信号、T日收盘成交、止损-5%/止盈+8%/5日到期/结构失效出场），'
             '个股徽章为该股历史被模型选中后的累计表现；"今日新入池"为实时登记，需等K线数据刷新到覆盖入选日'
-            '后自动结算5日战绩。<b>回测战绩不代表未来收益，用于验证模型逻辑是否成立；胜率天花板约44-45%'
+            '后自动结算5日战绩。当前胜率/累计收益为回测样本口径，随每日入池结算将逐步转为实时口径。'
+            '<b>回测战绩不代表未来收益，用于验证模型逻辑是否成立；胜率天花板约44-45%'
             '（框架特性，靠频率+纪律+控回撤取胜，非靠高胜率）。</b></div>')
     return (head + '<div class="btgrid">%s</div>%s%s%s%s</div>'
             % (boxes, curve, live_rows, table, note))
@@ -575,8 +721,9 @@ def render(rows=None):
     lamp, lamp_txt = market_status()
 
     cards = "".join(build_card(r, tot_mv) for r in rows)
-    pick_html = build_picks()
-    track_html = build_track()
+    perf = _compute_perf()
+    pick_html = build_picks(perf)
+    track_html = build_track(perf)
     bt_html = build_backtest()
     rev_html = "".join('<li><b>%s</b>（%s）：%s</li>' % r for r in REVISION_LOG)
     rules_html = "".join("<li>%s</li>" % r for r in RULES)
@@ -725,6 +872,7 @@ a{color:#74b9ff;text-decoration:none}
 .eqsvg{width:100%;height:120px;background:#f7f8fa;border:1px solid #eef0f4;border-radius:10px}
 .pbadge{font-size:12.5px;background:#f0edfd;border-left:3px solid #6c5ce7;border-radius:0 8px 8px 0;padding:6px 10px;margin:4px 0 6px;line-height:1.6}
 .pbadge.new{background:#fff8e1;border-left-color:#e17055}
+.pbadge.live{background:#eef4fb;border-left-color:#0984e3}
 .pbadge b{color:#2d3436}
 /* ===== 页脚 ===== */
 .ft{background:#fff;border-radius:12px;padding:14px;margin:14px 0;font-size:12px;color:#636e72;line-height:1.9;box-shadow:0 1px 3px rgba(0,0,0,.06)}
