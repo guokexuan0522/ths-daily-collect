@@ -166,7 +166,11 @@ def build_rows():
         if vr_valid and vr >= 2:
             alerts.append("量比%.2f≥2放量" % vr)
         if abs(q["price"] - p["cost"]) / p["cost"] * 100 <= 2:
-            alerts.append("逼近成本线(差%.1f%%)" % abs(q["price"] - p["cost"]) / p["cost"] * 100)
+            dist_cost = abs(q["price"] - p["cost"]) / p["cost"] * 100
+            if p["shares"]:
+                alerts.append("逼近成本线(差%.1f%%)" % dist_cost)
+            else:
+                alerts.append("现价贴合参考基准(差%.1f%%)" % dist_cost)
         if up_limit and q["price"] >= up_limit * 0.97:
             alerts.append("临近涨停(%.2f)" % up_limit)
         if dn_limit and q["price"] <= dn_limit * 1.03:
