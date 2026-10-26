@@ -18,7 +18,7 @@ PICKS_FILE = DIR / "picks.json"
 BT_FILE = DIR / "backtest.json"
 TRACK_FILE = DIR / "picks_history.jsonl"   # 每日选股入池登记（实时追踪流水，v3.3 新增）
 
-VERSION = "v3.4"
+VERSION = "v3.5"
 UP = "#e0322f"        # 红=涨/盈利
 DOWN = "#00a37a"      # 绿=跌/亏损
 BLUE = "#0984e3"
@@ -59,6 +59,12 @@ REVISION_LOG = [
      "当前股价取腾讯实时行情；收益率按盘后可执行口径——入池当日不可买，T+1(下一交易日)开盘建仓，自T+1起算持仓"
      "天数与收益，未到T+1标'待T+1建仓'(并给预计T+1日期) ②新增market推断+新浪带日期日K拉取+腾讯批量行情，"
      "render时批量补全(每code一次请求) ③候选池卡片附'较入选价'参考涨跌(非T+1口径，仅感知用，明确标注'参考')"),
+    ("v3.5", "2026-10-27", "【自选关注·鼎捷数智纳入盯盘】①鼎捷数智(300378·创业板)加入自选股："
+     "持仓作战区新增「⭐自选·关注」标识卡，0股未建仓口径——只看行情/策略/资金流，不计实仓盈亏、"
+     "不影响总市值与组合盈亏 ②资金流看板同步纳入：ths_common.STOCKS 新增(300378,'33',鼎捷数智)，"
+     "云端Actions下次采集(08:30/15:45/18:00)后自动填充逐日资金流 ③总览「持仓数」卡拆分口径："
+     "实仓N只｜⭐自选M只，自选股不再混入实仓统计 ④自选股口径适配：未建仓不显示浮动盈亏/日内盈亏"
+     "（显示'—（未建仓）'），成本贴近告警改文案'现价贴合参考基准'"),
 ]
 
 RULES = [
@@ -142,6 +148,21 @@ def build_card(r, tot_mv):
     e12d = (r["price"] - e12) / e12 * 100 if e12 else None
     e50d = (r["price"] - e50) / e50 * 100 if e50 else None
     posbar = min(max(r["pos_in_range"], 0), 100)
+    is_watch = not r["shares"]   # v3.5 自选关注（0股）：只看行情/策略/资金流，不计实仓盈亏
+    watch_tag = ('<span class="tb" style="background:#6c5ce7;color:#fff">⭐自选·关注</span>'
+                 if is_watch else "")
+    if is_watch:
+        shares_html, cost_label = "自选·未建仓", "参考基准"
+        mv_html = "自选关注 · 不计仓位"
+        pl_html, daypl_html = "—（未建仓）", "—（未建仓）"
+        px_daypl = "—（未建仓）"
+    else:
+        shares_html = "%s 股" % "{:,}".format(r["shares"])
+        cost_label = "成本价"
+        mv_html = '%.2f万 ｜ <span class="hl">%.1f%%</span>' % (r["mv"] / 1e4, weight)
+        pl_html = '%s (%+.2f%%)' % ("{:+,.2f}万".format(r["pl"] / 1e4), r["pl_pct"])
+        daypl_html = '%s 万' % "{:+,.2f}".format(r["day_pl"] / 1e4)
+        px_daypl = "日内%+.2f万" % (r["day_pl"] / 1e4)
 
     alert_html = "".join('<span class="tag">⚠ %s</span>' % a for a in r["alerts"])
     alert_html = alert_html or '<span class="tag ok">✓ 无异动</span>'
@@ -168,22 +189,23 @@ def build_card(r, tot_mv):
   <div class="chead">
     <div class="nmbox">
       <span class="nm">%(name)s</span><span class="code">%(code)s</span>
+      %(watch_tag)s
       <span class="tb">%(tb)s</span>
       <span class="cls">%(cls)s</span>
     </div>
     <div class="pxbox">
       <span class="px" style="color:%(c_price)s">%(price).2f</span>
       <span class="chg" style="color:%(c_price)s">%(chg)+.2f%%</span>
-      <span class="daypl" style="color:%(c_day)s">日内%(daypl)s万</span>
+      <span class="daypl" style="color:%(c_day)s">%(px_daypl)s</span>
     </div>
   </div>
   <div class="alerts">%(alerts)s</div>
   <div class="kpis">
-    <div class="kpi"><label>持仓数量</label><b>%(shares)s 股</b></div>
-    <div class="kpi"><label>成本价</label><b>%(cost).4f</b></div>
-    <div class="kpi"><label>市值 ｜ 仓位占比</label><b>%(mv).2f万 ｜ <span class="hl">%(weight).1f%%</span></b></div>
-    <div class="kpi"><label>持仓盈亏</label><b style="color:%(c_pl)s">%(pl)s (%(plpct)+.2f%%)</b></div>
-    <div class="kpi"><label>当日盈亏</label><b style="color:%(c_day)s">%(daypl)s 万</b></div>
+    <div class="kpi"><label>持仓数量</label><b>%(shares_html)s</b></div>
+    <div class="kpi"><label>%(cost_label)s</label><b>%(cost).4f</b></div>
+    <div class="kpi"><label>市值 ｜ 仓位占比</label><b>%(mv_html)s</b></div>
+    <div class="kpi"><label>持仓盈亏</label><b style="color:%(c_pl)s">%(pl_html)s</b></div>
+    <div class="kpi"><label>当日盈亏</label><b style="color:%(c_day)s">%(daypl_html)s</b></div>
     <div class="kpi"><label>今日 高/低</label><b>%(high).2f / %(low).2f</b></div>
     <div class="kpi"><label>涨跌停</label><b>%(up_limit).2f / %(dn_limit).2f</b></div>
     <div class="kpi"><label>量比 ｜ 换手</label><b>%(vr)s ｜ %(turn).2f%%</b></div>
@@ -204,12 +226,13 @@ def build_card(r, tot_mv):
         "alert_cls": " alert" if r["alerts"] else "",
         "name": r["name"], "code": r["code"], "tb": typebadge,
         "cls": "已收盘" if r["closed"] else "交易中",
+        "watch_tag": watch_tag,
         "c_price": c_price, "price": r["price"], "chg": r["chg_pct"],
-        "c_day": c_day, "daypl": "{:+,.2f}".format(r["day_pl"] / 1e4),
-        "alerts": alert_html, "shares": "{:,}".format(r["shares"]),
-        "cost": r["cost"], "mv": r["mv"] / 1e4, "weight": weight,
-        "c_pl": c_pl, "pl": "{:+,.2f}万".format(r["pl"] / 1e4),
-        "plpct": r["pl_pct"], "high": r["high"], "low": r["low"],
+        "c_day": c_day, "px_daypl": px_daypl,
+        "alerts": alert_html, "shares_html": shares_html, "cost_label": cost_label,
+        "mv_html": mv_html, "pl_html": pl_html, "daypl_html": daypl_html,
+        "cost": r["cost"],
+        "c_pl": c_pl, "high": r["high"], "low": r["low"],
         "up_limit": r["up_limit"], "dn_limit": r["dn_limit"],
         "vr": ("%.2f" % r["vol_ratio"]) if r["vol_ratio"] else "盘后不显示",
         "turn": r["turnover"], "amt": r["amt_wan"], "amp": r["amp_today"],
@@ -898,7 +921,7 @@ a{color:#74b9ff;text-decoration:none}
     <div class="box"><label>总市值</label><b>__TOTMV__ 万</b><div class="sub">总成本 __TOTCOST__ 万</div></div>
     <div class="box"><label>持仓总盈亏</label><b style="color:__TOTPLC__">__TOTPL__ 万</b><div class="sub">__TOTPLPCT__%</div></div>
     <div class="box"><label>当日盈亏</label><b style="color:__TOTDAYC__">__TOTDAY__ 万</b><div class="sub">按今日涨跌×持仓</div></div>
-    <div class="box"><label>持仓数</label><b>__N__ 只</b><div class="sub">超短1-3只纪律内</div></div>
+    <div class="box"><label>持仓数</label><b>__N__ 只</b><div class="sub">__NSUB__</div></div>
     <div class="box"><label>今日主推</label><b>__TOPPICK__</b><div class="sub">候选池详见选股区</div></div>
   </div>
 </div>
@@ -934,6 +957,9 @@ __BT__
             top_pick = " / ".join("%s(%.1f)" % (p["name"], p["score"]) for p in prim[:3])
     except Exception:
         pass
+    n_pos = sum(1 for r in rows if r["shares"])          # 实仓只数
+    n_watch = sum(1 for r in rows if not r["shares"])    # 自选只数（v3.5）
+    nsub = "超短1-3只纪律内" + ("｜⭐自选 %d 只" % n_watch if n_watch else "")
     html = (html.replace("__VER__", VERSION).replace("__GEN__", gen)
             .replace("__LAMP__", lamp).replace("__LAMPTXT__", lamp_txt)
             .replace("__TOTMV__", "{:,.2f}".format(tot_mv / 1e4))
@@ -943,7 +969,8 @@ __BT__
             .replace("__TOTPLPCT__", "%+.2f" % tot_pl_pct)
             .replace("__TOTDAYC__", UP if tot_day >= 0 else DOWN)
             .replace("__TOTDAY__", "{:+,.2f}".format(tot_day / 1e4))
-            .replace("__N__", str(len(rows)))
+            .replace("__N__", str(n_pos))
+            .replace("__NSUB__", nsub)
             .replace("__TOPPICK__", top_pick)
             .replace("__CARDS__", cards)
             .replace("__PICKS__", pick_html)
