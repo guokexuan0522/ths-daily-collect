@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-10-30 08:42:53",
-  "market_scanned": 1300,
+  "generated_at": "2026-10-31 01:37:50",
+  "market_scanned": 5576,
   "layer1_pool": 500,
-  "layer2_scored": 52,
+  "layer2_scored": 54,
   "data_source": "新浪全市场+新浪日K+同花顺资金流(东财当前403降级)",
-  "elapsed_sec": 519.0,
+  "elapsed_sec": 570.3,
   "picks": [
     {
       "rank": 1,
